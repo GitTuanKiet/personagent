@@ -1,0 +1,37 @@
+{
+  "name": "@pag/permissions",
+  "version": "0.0.0",
+  "scripts": {
+    "clean": "rimraf dist .turbo",
+    "dev": "bun watch",
+    "typecheck": "tsc --noEmit",
+    "build": "bun --bun tsup",
+    "format": "biome format --write .",
+    "format:check": "biome ci .",
+    "lint": "eslint . --quiet",
+    "lintfix": "eslint . --fix",
+    "watch": "bun --bun tsup --watch",
+    "test": "bun test",
+    "test:dev": "bun test --watch"
+  },
+  "main": "dist/cjs/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist/**/*"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "bun": "./dist/bun/index.js",
+      "import": "./dist/index.mjs",
+      "require": "./dist/cjs/index.js"
+    }
+  },
+  "dependencies": {
+    "zod": "^3.25.30"
+  },
+  "devDependencies": {
+    "@pag/typescript-config": "workspace:*"
+  }
+}
