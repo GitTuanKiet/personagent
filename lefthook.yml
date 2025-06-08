@@ -1,0 +1,20 @@
+pre-commit:
+  commands:
+    biome_check:
+      glob:
+        - 'packages/**/*.{js,ts,json}'
+        - 'apps/**/*.{js,ts,json}'
+      run: bun --bun biome check --write --no-errors-on-unmatched --files-ignore-unknown=true --colors=off {staged_files}
+      stage_fixed: true
+      skip:
+        - merge
+        - rebase
+    prettier_check:
+      glob:
+        - 'packages/**/*.{tsx,jsx,yml,md,css,scss}'
+        - 'apps/**/*.{tsx,jsx,yml,md,css,scss}'
+      run: bun --bun prettier --write --ignore-unknown --no-error-on-unmatched-pattern {staged_files}
+      stage_fixed: true
+      skip:
+        - merge
+        - rebase

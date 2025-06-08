@@ -1,0 +1,25 @@
+{
+  "name": "@pag/vitest-config",
+  "version": "0.0.0",
+  "type": "module",
+  "peerDependencies": {
+    "vite": "^6.3.5",
+    "vitest": "^3.1.4"
+  },
+  "devDependencies": {
+    "vite": "^6.3.5",
+    "vitest": "^3.1.4"
+  },
+  "files": [
+    "frontend.mjs"
+  ],
+  "exports": {
+    "./frontend": {
+      "import": "./frontend.mjs",
+      "require": "./frontend.mjs",
+      "types": "./frontend.d.ts"
+    },
+    "./*": "./*"
+  },
+  "license": "See LICENSE.md file in the root of the repository"
+}

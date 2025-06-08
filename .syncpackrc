@@ -1,0 +1,6 @@
+{
+    "packages": [
+        "apps/*/package.json",
+        "packages/*/package.json"
+    ]
+}
