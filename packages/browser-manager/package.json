@@ -1,0 +1,48 @@
+{
+  "name": "@pag/browser-manager",
+  "version": "0.0.0",
+  "scripts": {
+    "clean": "rimraf dist .turbo",
+    "typecheck": "tsc --noEmit",
+    "build": "bun --bun tsup",
+    "format": "biome format --write src",
+    "format:check": "biome ci src",
+    "test": "bun test",
+    "test:watch": "bun test --watch",
+    "lint": "eslint . --quiet",
+    "lintfix": "eslint . --fix",
+    "watch": "bun --bun tsup --watch"
+  },
+  "main": "dist/cjs/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "bun": "./dist/bun/index.js",
+      "import": "./dist/index.mjs",
+      "require": "./dist/cjs/index.js"
+    }
+  },
+  "dependencies": {
+    "lodash": "^4.17.21",
+    "minimatch": "^10.0.3",
+    "ps-list": "^8.1.1",
+    "reflect-metadata": "^0.2.2",
+    "turndown": "^7.2.0"
+  },
+  "devDependencies": {
+    "@types/bun": "*",
+    "@types/lodash": "^4.17.17",
+    "@types/turndown": "^5.0.5",
+    "biome": "^0.3.3",
+    "eslint": "^9.28.0",
+    "patchright": "^1.52.5",
+    "rimraf": "^6.0.1",
+    "tsup": "^8.5.0",
+    "typescript": "^5.8.3"
+  }
+}

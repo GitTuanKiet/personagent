@@ -1,0 +1,43 @@
+ARG PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+
+# ------------------------------
+# Base
+# ------------------------------
+FROM oven/bun:canary-slim AS base
+
+ARG PLAYWRIGHT_BROWSERS_PATH
+ENV PLAYWRIGHT_BROWSERS_PATH=${PLAYWRIGHT_BROWSERS_PATH}
+
+# Set the working directory
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y procps && rm -rf /var/lib/apt/lists/*
+
+RUN bunx -y patchright-core install-deps chrome
+
+# ------------------------------
+# Browser
+# ------------------------------
+# Cache optimization:
+# - Browser is downloaded only when node_modules or Playwright system dependencies change
+# - Cache is reused when only source code changes
+FROM base AS browser
+
+RUN bunx -y patchright-core install --no-shell chrome
+
+# ------------------------------
+# Runtime
+# ------------------------------
+FROM base
+
+ARG PLAYWRIGHT_BROWSERS_PATH
+ARG USERNAME=bun
+ENV NODE_ENV=production
+
+USER ${USERNAME}
+
+COPY --from=browser --chown=${USERNAME}:${USERNAME} ${PLAYWRIGHT_BROWSERS_PATH} ${PLAYWRIGHT_BROWSERS_PATH}
+COPY --chown=${USERNAME}:${USERNAME} out/server.js  ./
+
+# Run in headless and only with chromium (other browsers need more dependencies not included in this image)
+ENTRYPOINT ["bun", "server.js"]
