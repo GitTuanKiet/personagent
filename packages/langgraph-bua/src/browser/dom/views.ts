@@ -3,8 +3,8 @@
 
 import { HistoryTreeProcessor } from './history_tree_processor/service';
 import type { ViewportInfo, HashedDomElement, CoordinateSet } from './history_tree_processor/views';
-import { memoized } from 'browser/utils';
-import { container } from 'browser/di';
+import { memoized } from '../utils';
+import { container } from '../di';
 
 export abstract class DOMBaseNode {
 	isVisible: boolean;

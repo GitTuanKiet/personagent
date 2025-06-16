@@ -6,7 +6,7 @@ import { PromptTemplate } from '@langchain/core/prompts';
 import { ChatOpenAI } from '@langchain/openai';
 import TurndownService from 'turndown';
 import { zodToJsonSchema } from 'zod-to-json-schema';
-import _ from 'lodash';
+import { repeat } from 'lodash';
 import type { Page } from 'playwright';
 
 export type ActionDescription = Pick<DynamicStructuredTool, 'name' | 'description' | 'schema'> & {
@@ -1004,10 +1004,10 @@ async function getTurndownService(includeLinks: boolean = false) {
 			replacement: (content, node, options) => {
 				const hLevel = Number(node.nodeName.charAt(1));
 				if (options.headingStyle === 'setext' && hLevel < 3) {
-					const underline = _.repeat(hLevel === 1 ? '=' : '-', Math.min(128, content.length));
+					const underline = repeat(hLevel === 1 ? '=' : '-', Math.min(128, content.length));
 					return '\n\n' + content + '\n' + underline + '\n\n';
 				} else {
-					return '\n\n' + _.repeat('#', hLevel) + ' ' + content + '\n\n';
+					return '\n\n' + repeat('#', hLevel) + ' ' + content + '\n\n';
 				}
 			},
 		});

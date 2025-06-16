@@ -1,5 +1,5 @@
 {
-	"extends": "@pag/typescript-config/tsconfig.common.json",
+	"extends": "@pag/typescript-config/base.json",
 	"compilerOptions": {
 		"rootDir": ".",
 		"baseUrl": "src",

@@ -4,11 +4,11 @@
   "type": "module",
   "peerDependencies": {
     "vite": "^6.3.5",
-    "vitest": "^3.1.4"
+    "vitest": "^3.2.3"
   },
   "devDependencies": {
     "vite": "^6.3.5",
-    "vitest": "^3.1.4"
+    "vitest": "^3.2.3"
   },
   "files": [
     "frontend.mjs"

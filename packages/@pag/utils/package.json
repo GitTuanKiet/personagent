@@ -31,10 +31,10 @@
     "@pag/eslint-config": "workspace:*",
     "@pag/typescript-config": "workspace:*",
     "@pag/vitest-config": "workspace:*",
-    "@happy-dom/global-registrator": "^17.4.7",
-    "typescript": "*",
+    "@happy-dom/global-registrator": "^18.0.1",
+    "typescript": "^5.8.3",
     "vite": "^6.3.5",
-    "vitest": "^3.1.4"
+    "vitest": "^3.2.3"
   },
   "license": "See LICENSE.md file in the root of the repository"
 }

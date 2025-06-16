@@ -3,7 +3,7 @@
 
 import { createHash } from 'node:crypto';
 import { DOMElementNode } from '../views';
-import { singleton } from 'browser/di';
+import { singleton } from '../../di';
 
 @singleton()
 export class ClickableElementProcessor {

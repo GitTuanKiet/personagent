@@ -2,7 +2,7 @@ import type { LangGraphRunnableConfig } from '@langchain/langgraph';
 import type { BUAState, BUAUpdate } from '../types';
 import { getConfigurationWithDefaults } from '../types';
 import { BrowserAction, browserContainer } from '../browser';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'node:crypto';
 
 export async function createBrowser(
 	state: BUAState,
@@ -20,6 +20,6 @@ export async function createBrowser(
 	await browserAction.session.start();
 
 	return {
-		sessionId: browserAction.session.browserPid?.toString() || uuidv4(),
+		sessionId: browserAction.session.browserPid?.toString() || randomUUID(),
 	};
 }

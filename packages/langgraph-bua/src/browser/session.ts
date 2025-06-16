@@ -1,7 +1,7 @@
 import assert from 'assert';
 import psList from 'ps-list';
-import { BrowserProfile } from 'browser/profile';
-import { singleton } from 'browser/di';
+import { BrowserProfile } from './profile';
+import { singleton } from './di';
 import type {
 	BrowserContextOptions,
 	Page,

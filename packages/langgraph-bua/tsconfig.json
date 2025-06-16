@@ -25,10 +25,10 @@
 		"declaration": false,
 		"sourceMap": true,
 		"skipLibCheck": true,
-		"types": ["bun"],
 		"rootDir": ".",
 		"emitDecoratorMetadata": true,
 		"experimentalDecorators": true,
+		"types": ["bun"],
 		"baseUrl": "src",
 		"tsBuildInfoFile": "dist/typecheck.tsbuildinfo"
 	}

@@ -1,12 +1,12 @@
 import type { AnnotationRoot, LangGraphRunnableConfig } from '@langchain/langgraph';
 import { Annotation, END, START, StateGraph } from '@langchain/langgraph';
 import { SystemMessage } from '@langchain/core/messages';
-import { executeAction } from './nodes/execute-action.js';
+import { executeAction } from './nodes/execute-action';
 import { callModel } from './nodes/call-model.js';
-import { createBrowser } from './nodes/create-browser.js';
+import { createBrowser } from './nodes/create-browser';
 import type { BUAState, BUAUpdate } from './types.js';
-import { BUAAnnotation, BUAConfigurable } from './types.js';
-import type { BrowserProfileOptions } from 'browser/profile.js';
+import { BUAAnnotation, BUAConfigurable } from './types';
+import type { BrowserProfileOptions } from './browser/profile';
 
 /**
  * Routes to the nodeBeforeAction node if a computer call is present
@@ -51,7 +51,7 @@ function reinvokeModelOrEnd(state: BUAState): 'callModel' | typeof END {
 /**
  * Configuration for the Computer Use Agent.
  */
-interface CreateBuaParams<
+export interface CreateBuaParams<
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	StateModifier extends AnnotationRoot<any> = typeof BUAAnnotation,
 > {
@@ -168,3 +168,4 @@ export {
 	BUAConfigurable,
 } from './types.js';
 export { getToolCalls, isBrowserCallToolMessage } from './utils.js';
+export * from './browser';

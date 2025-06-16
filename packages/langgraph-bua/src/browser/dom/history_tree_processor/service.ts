@@ -5,8 +5,8 @@ import { isDeepStrictEqual } from 'node:util';
 import { createHash } from 'crypto';
 import type { DOMHistoryElement, HashedDomElement } from './views';
 import { DOMElementNode } from '../views';
-import { singleton } from 'browser/di';
-import { enhancedCssSelectorForElement } from 'browser/utils';
+import { singleton } from '../../di';
+import { enhancedCssSelectorForElement } from '../../utils';
 
 @singleton()
 export class HistoryTreeProcessor {

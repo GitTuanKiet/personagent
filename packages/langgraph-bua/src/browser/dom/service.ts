@@ -5,8 +5,8 @@ import { join } from 'node:path';
 import type { Page, ViewportSize } from 'playwright';
 import type { SelectorMap } from './views';
 import { DOMBaseNode, DOMElementNode, DOMTextNode, DOMState } from './views';
-import { timeExecutionAsync } from 'browser/utils';
-import { singleton } from 'browser/di';
+import { timeExecutionAsync } from '../utils';
+import { singleton } from '../di';
 
 @singleton()
 export class DomService {

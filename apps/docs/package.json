@@ -11,8 +11,8 @@
     "check-types": "tsc --noEmit"
   },
   "dependencies": {
-    "@pag/ui": "workspace:*",
-    "next": "^15.3.2",
+    "@workspace/ui": "workspace:*",
+    "next": "latest",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"
   },
@@ -20,9 +20,9 @@
     "@pag/eslint-config": "workspace:*",
     "@pag/typescript-config": "workspace:*",
     "@types/node": "*",
-    "@types/react": "19.1.6",
-    "@types/react-dom": "19.1.5",
-    "eslint": "^9.27.0",
-    "typescript": "*"
+    "@types/react": "19.1.7",
+    "@types/react-dom": "19.1.6",
+    "eslint": "^9.28.0",
+    "typescript": "^5.8.3"
   }
 }

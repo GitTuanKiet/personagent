@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { DynamicStructuredAction } from '../base';
-import { sleep } from 'browser/utils';
+import { sleep } from '../../browser/utils';
 
 export const waitAction = new DynamicStructuredAction({
 	name: 'wait',
