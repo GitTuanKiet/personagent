@@ -3,7 +3,6 @@ import {
 	usabilityIssues,
 	type UsabilityIssueSelect,
 	type UsabilityIssueInsert,
-	type UsabilityType,
 	type UsabilitySeverity,
 	type UsabilityImpact,
 } from '@/database/client/schema';
@@ -13,7 +12,6 @@ import { getVisitorId } from '@/store/user';
 export interface UsabilityIssueQueryParams {
 	ids?: number[];
 	simulationId?: number;
-	type?: UsabilityType;
 	severity?: UsabilitySeverity;
 	impact?: UsabilityImpact;
 	tags?: string[];
@@ -132,13 +130,10 @@ class UsabilityIssueService {
 			}
 		}
 		if (params.simulationId) conditions.push(eq(usabilityIssues.simulationId, params.simulationId));
-		if (params.type) conditions.push(eq(usabilityIssues.type, params.type));
 		if (params.severity) conditions.push(eq(usabilityIssues.severity, params.severity));
 		if (params.impact) conditions.push(eq(usabilityIssues.impact, params.impact));
 		if (params.detectedByPersonaId)
-			conditions.push(eq(usabilityIssues.detectedByPersonaId, params.detectedByPersonaId));
-		if (params.tags && params.tags.length)
-			conditions.push(sql`${usabilityIssues.tags} && ${params.tags}`);
+			conditions.push(eq(usabilityIssues.personaId, params.detectedByPersonaId));
 		if (params.fromDate) conditions.push(sql`${usabilityIssues.createdAt} >= ${params.fromDate}`);
 		if (params.toDate) conditions.push(sql`${usabilityIssues.createdAt} <= ${params.toDate}`);
 		if (params.search) {

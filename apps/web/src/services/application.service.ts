@@ -27,13 +27,12 @@ class ApplicationService {
 			throw new Error('Application not found');
 		}
 		const updated = await clientDB.transaction(async (tx) => {
-			if (existing.pinned === false) {
-				await tx.update(applications).set({ pinned: false }).where(eq(applications.pinned, true));
-			}
-
+			// Always unpin all applications first
+			await tx.update(applications).set({ pinned: false }).where(eq(applications.pinned, true));
+			// Then pin the specified application
 			const [updated] = await tx
 				.update(applications)
-				.set({ pinned: !existing.pinned })
+				.set({ pinned: true })
 				.where(eq(applications.id, id))
 				.returning();
 

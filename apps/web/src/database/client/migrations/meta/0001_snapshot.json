@@ -1,0 +1,418 @@
+{
+	"id": "593e459d-cef8-476f-9f88-07d126849e73",
+	"prevId": "0649c444-5eef-4a8d-a9e5-6cd39e6e45fb",
+	"version": "7",
+	"dialect": "postgresql",
+	"tables": {
+		"public.applications": {
+			"name": "applications",
+			"schema": "",
+			"columns": {
+				"name": {
+					"name": "name",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"description": {
+					"name": "description",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false
+				},
+				"headers": {
+					"name": "headers",
+					"type": "jsonb",
+					"primaryKey": false,
+					"notNull": false
+				},
+				"cookies": {
+					"name": "cookies",
+					"type": "jsonb",
+					"primaryKey": false,
+					"notNull": false
+				},
+				"credentials": {
+					"name": "credentials",
+					"type": "jsonb",
+					"primaryKey": false,
+					"notNull": false
+				},
+				"timeout": {
+					"name": "timeout",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": true,
+					"default": 30000
+				},
+				"env": {
+					"name": "env",
+					"type": "jsonb",
+					"primaryKey": false,
+					"notNull": false
+				},
+				"allowedDomains": {
+					"name": "allowedDomains",
+					"type": "text[]",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"recursionLimit": {
+					"name": "recursionLimit",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": true,
+					"default": 100
+				},
+				"useVision": {
+					"name": "useVision",
+					"type": "boolean",
+					"primaryKey": false,
+					"notNull": true,
+					"default": false
+				},
+				"pinned": {
+					"name": "pinned",
+					"type": "boolean",
+					"primaryKey": false,
+					"notNull": true,
+					"default": false
+				},
+				"id": {
+					"name": "id",
+					"type": "serial",
+					"primaryKey": true,
+					"notNull": true
+				},
+				"fingerprint": {
+					"name": "fingerprint",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"createdAt": {
+					"name": "createdAt",
+					"type": "timestamp with time zone",
+					"primaryKey": false,
+					"notNull": true,
+					"default": "now()"
+				},
+				"updatedAt": {
+					"name": "updatedAt",
+					"type": "timestamp with time zone",
+					"primaryKey": false,
+					"notNull": true,
+					"default": "now()"
+				}
+			},
+			"indexes": {},
+			"foreignKeys": {},
+			"compositePrimaryKeys": {},
+			"uniqueConstraints": {
+				"applications_name_unique": {
+					"name": "applications_name_unique",
+					"nullsNotDistinct": false,
+					"columns": ["name"]
+				}
+			},
+			"policies": {},
+			"checkConstraints": {},
+			"isRLSEnabled": false
+		},
+		"public.personas": {
+			"name": "personas",
+			"schema": "",
+			"columns": {
+				"name": {
+					"name": "name",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"description": {
+					"name": "description",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false
+				},
+				"ageGroup": {
+					"name": "ageGroup",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false
+				},
+				"digitalSkillLevel": {
+					"name": "digitalSkillLevel",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false
+				},
+				"behaviorTraits": {
+					"name": "behaviorTraits",
+					"type": "text[]",
+					"primaryKey": false,
+					"notNull": false
+				},
+				"preferences": {
+					"name": "preferences",
+					"type": "jsonb",
+					"primaryKey": false,
+					"notNull": false
+				},
+				"language": {
+					"name": "language",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true,
+					"default": "'vietnamese'"
+				},
+				"pinned": {
+					"name": "pinned",
+					"type": "boolean",
+					"primaryKey": false,
+					"notNull": true,
+					"default": false
+				},
+				"id": {
+					"name": "id",
+					"type": "serial",
+					"primaryKey": true,
+					"notNull": true
+				},
+				"fingerprint": {
+					"name": "fingerprint",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"createdAt": {
+					"name": "createdAt",
+					"type": "timestamp with time zone",
+					"primaryKey": false,
+					"notNull": true,
+					"default": "now()"
+				},
+				"updatedAt": {
+					"name": "updatedAt",
+					"type": "timestamp with time zone",
+					"primaryKey": false,
+					"notNull": true,
+					"default": "now()"
+				}
+			},
+			"indexes": {},
+			"foreignKeys": {},
+			"compositePrimaryKeys": {},
+			"uniqueConstraints": {
+				"personas_name_unique": {
+					"name": "personas_name_unique",
+					"nullsNotDistinct": false,
+					"columns": ["name"]
+				}
+			},
+			"policies": {},
+			"checkConstraints": {},
+			"isRLSEnabled": false
+		},
+		"public.simulations": {
+			"name": "simulations",
+			"schema": "",
+			"columns": {
+				"personaId": {
+					"name": "personaId",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"applicationId": {
+					"name": "applicationId",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"task": {
+					"name": "task",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"status": {
+					"name": "status",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true,
+					"default": "'idle'"
+				},
+				"state": {
+					"name": "state",
+					"type": "jsonb",
+					"primaryKey": false,
+					"notNull": false
+				},
+				"id": {
+					"name": "id",
+					"type": "serial",
+					"primaryKey": true,
+					"notNull": true
+				},
+				"fingerprint": {
+					"name": "fingerprint",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"createdAt": {
+					"name": "createdAt",
+					"type": "timestamp with time zone",
+					"primaryKey": false,
+					"notNull": true,
+					"default": "now()"
+				},
+				"updatedAt": {
+					"name": "updatedAt",
+					"type": "timestamp with time zone",
+					"primaryKey": false,
+					"notNull": true,
+					"default": "now()"
+				}
+			},
+			"indexes": {},
+			"foreignKeys": {
+				"simulations_personaId_personas_id_fk": {
+					"name": "simulations_personaId_personas_id_fk",
+					"tableFrom": "simulations",
+					"tableTo": "personas",
+					"columnsFrom": ["personaId"],
+					"columnsTo": ["id"],
+					"onDelete": "no action",
+					"onUpdate": "no action"
+				},
+				"simulations_applicationId_applications_id_fk": {
+					"name": "simulations_applicationId_applications_id_fk",
+					"tableFrom": "simulations",
+					"tableTo": "applications",
+					"columnsFrom": ["applicationId"],
+					"columnsTo": ["id"],
+					"onDelete": "no action",
+					"onUpdate": "no action"
+				}
+			},
+			"compositePrimaryKeys": {},
+			"uniqueConstraints": {},
+			"policies": {},
+			"checkConstraints": {},
+			"isRLSEnabled": false
+		},
+		"public.usability_issues": {
+			"name": "usability_issues",
+			"schema": "",
+			"columns": {
+				"simulationId": {
+					"name": "simulationId",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"personaId": {
+					"name": "personaId",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"description": {
+					"name": "description",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"recommendation": {
+					"name": "recommendation",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false
+				},
+				"severity": {
+					"name": "severity",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false
+				},
+				"impact": {
+					"name": "impact",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false
+				},
+				"extra": {
+					"name": "extra",
+					"type": "jsonb",
+					"primaryKey": false,
+					"notNull": false
+				},
+				"id": {
+					"name": "id",
+					"type": "serial",
+					"primaryKey": true,
+					"notNull": true
+				},
+				"fingerprint": {
+					"name": "fingerprint",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"createdAt": {
+					"name": "createdAt",
+					"type": "timestamp with time zone",
+					"primaryKey": false,
+					"notNull": true,
+					"default": "now()"
+				},
+				"updatedAt": {
+					"name": "updatedAt",
+					"type": "timestamp with time zone",
+					"primaryKey": false,
+					"notNull": true,
+					"default": "now()"
+				}
+			},
+			"indexes": {},
+			"foreignKeys": {
+				"usability_issues_simulationId_simulations_id_fk": {
+					"name": "usability_issues_simulationId_simulations_id_fk",
+					"tableFrom": "usability_issues",
+					"tableTo": "simulations",
+					"columnsFrom": ["simulationId"],
+					"columnsTo": ["id"],
+					"onDelete": "no action",
+					"onUpdate": "no action"
+				},
+				"usability_issues_personaId_personas_id_fk": {
+					"name": "usability_issues_personaId_personas_id_fk",
+					"tableFrom": "usability_issues",
+					"tableTo": "personas",
+					"columnsFrom": ["personaId"],
+					"columnsTo": ["id"],
+					"onDelete": "no action",
+					"onUpdate": "no action"
+				}
+			},
+			"compositePrimaryKeys": {},
+			"uniqueConstraints": {},
+			"policies": {},
+			"checkConstraints": {},
+			"isRLSEnabled": false
+		}
+	},
+	"enums": {},
+	"schemas": {},
+	"sequences": {},
+	"roles": {},
+	"policies": {},
+	"views": {},
+	"_meta": {
+		"columns": {},
+		"schemas": {},
+		"tables": {}
+	}
+}

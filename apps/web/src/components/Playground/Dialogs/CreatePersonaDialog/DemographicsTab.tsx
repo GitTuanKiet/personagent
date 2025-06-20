@@ -20,7 +20,7 @@ export function DemographicsTab() {
 	const form = useFormContext<PersonaFormData>();
 
 	return (
-		<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+		<div className="flex flex-row justify-around gap-6">
 			<FormField
 				control={form.control}
 				name="ageGroup"
@@ -64,6 +64,28 @@ export function DemographicsTab() {
 										{level.label}
 									</SelectItem>
 								))}
+							</SelectContent>
+						</Select>
+						<FormMessage />
+					</FormItem>
+				)}
+			/>
+
+			<FormField
+				control={form.control}
+				name="language"
+				render={({ field }) => (
+					<FormItem>
+						<FormLabel>Language</FormLabel>
+						<Select onValueChange={field.onChange} defaultValue={field.value}>
+							<FormControl>
+								<SelectTrigger>
+									<SelectValue placeholder="Select language" />
+								</SelectTrigger>
+							</FormControl>
+							<SelectContent>
+								<SelectItem value="english">English</SelectItem>
+								<SelectItem value="vietnamese">Vietnamese</SelectItem>
 							</SelectContent>
 						</Select>
 						<FormMessage />

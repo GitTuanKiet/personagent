@@ -29,6 +29,8 @@ export type BehaviorTrait =
 	| 'prefersTextOverIcon'
 	| string;
 
+export type Language = 'vietnamese' | 'english';
+
 // PERSONAS TABLE
 export const personas = pgTable('personas', {
 	name: text().notNull().unique(),
@@ -38,6 +40,7 @@ export const personas = pgTable('personas', {
 	digitalSkillLevel: text().$type<DigitalSkillLevel>(),
 	behaviorTraits: text().array().$type<BehaviorTrait[]>(),
 	preferences: jsonb(),
+	language: text().notNull().default('vietnamese').$type<Language>(),
 
 	pinned: boolean().notNull().default(false),
 	...baseColumns,
@@ -59,8 +62,6 @@ export const applications = pgTable('applications', {
 	timeout: integer().notNull().default(30000),
 	env: jsonb().$type<{ [key: string]: string | number | boolean }>(),
 	allowedDomains: text().array().notNull(),
-	wssUrl: text(),
-	cdpUrl: text(),
 	recursionLimit: integer().notNull().default(100),
 	useVision: boolean().notNull().default(false),
 
@@ -88,7 +89,6 @@ export const simulations = pgTable('simulations', {
 	status: text().$type<SimulationStatus>().notNull().default('idle'),
 	state: jsonb().$type<BUAState>(),
 
-	pinned: boolean().notNull().default(false),
 	...baseColumns,
 });
 

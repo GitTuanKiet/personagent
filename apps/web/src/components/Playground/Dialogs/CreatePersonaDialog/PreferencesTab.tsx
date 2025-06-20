@@ -20,7 +20,7 @@ export function PreferencesTab() {
 
 	const preferences = form.watch('preferences');
 
-	// Initialize preferences pairs from form data
+	// Initialize preferences pairs from form data only once
 	useEffect(() => {
 		if (preferences && Object.keys(preferences).length > 0) {
 			const pairs = Object.entries(preferences).map(([key, value]) => ({
@@ -29,17 +29,17 @@ export function PreferencesTab() {
 			}));
 			setPreferencesPairs(pairs.length > 0 ? pairs : [{ key: '', value: '' }]);
 		}
-	}, []);
+	}, [preferences]); // Only depend on preferences
 
-	// Update form whenever pairs change
+	// Update form whenever pairs change, but only if they're different from current form value
 	useEffect(() => {
-		const preferencesObj: Record<string, any> = {};
-		preferencesPairs.forEach((pair) => {
-			if (pair.key.trim() && pair.value.trim()) {
-				preferencesObj[pair.key.trim()] = pair.value.trim();
-			}
-		});
-		form.setValue('preferences', preferencesObj);
+		const newPreferences = getPreferencesFromPairs();
+		const currentPreferences = form.getValues('preferences');
+
+		// Only update if the values are actually different
+		if (JSON.stringify(newPreferences) !== JSON.stringify(currentPreferences)) {
+			form.setValue('preferences', newPreferences);
+		}
 	}, [preferencesPairs, form]);
 
 	const addPreferencePair = () => {

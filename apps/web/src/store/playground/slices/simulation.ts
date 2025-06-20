@@ -1,44 +1,85 @@
 import { StateCreator } from 'zustand';
-import { toast } from 'sonner';
 import { simulationService } from '@/services/simulation.service';
-import type { SimulationSelect } from '@/database/client/schema';
+import type { SimulationInsert, SimulationSelect } from '@/database/client/schema';
+import { PlaygroundStore } from '..';
 
-export interface SimulationSlice {
-	// State
-	simulations: SimulationSelect[];
+export type SimulationListItem = Pick<
+	SimulationSelect,
+	'id' | 'task' | 'status' | 'createdAt' | 'updatedAt'
+>;
+
+interface SimulationState {
+	simulations: SimulationListItem[];
 	isSimulationLoading: boolean;
 	hasMoreSimulation: boolean;
 	currentSimulationPage: number;
 
-	// Actions
-	loadSimulations: () => Promise<void>;
-	removeSimulation: (id: number) => Promise<void>;
-	handlePinnedSimulation: (simulationId?: number) => Promise<void>;
-	getPinnedSimulation: () => SimulationSelect | null;
-	handleRunSimulation: () => Promise<void>;
-	handleStopSimulation: () => void;
+	currentSimulation: SimulationSelect | null;
+	isLoadingCurrentSimulation: boolean;
 }
 
-export const createSimulationSlice: StateCreator<
-	SimulationSlice & {
-		getPinnedPersona: () => any;
-		getPinnedApplication: () => any;
-		taskInput: string;
-		setTaskInput: (task: string) => void;
-	},
-	[],
-	[],
-	SimulationSlice
-> = (set, get) => ({
-	// State
+interface SimulationActions {
+	loadSimulationList: (forceReset?: boolean) => Promise<void>;
+	setCurrentSimulation: (id?: number | null) => Promise<void>;
+	createSimulation: (data: SimulationInsert) => Promise<SimulationSelect>;
+	updateSimulationInList: (simulation: SimulationSelect) => void;
+	removeSimulation: (id: number) => Promise<void>;
+	resetSimulations: () => void;
+}
+
+export interface SimulationSlice extends SimulationState, SimulationActions {}
+
+export const createSimulationSlice: StateCreator<SimulationSlice, [], [], SimulationSlice> = (
+	set,
+	get,
+) => ({
+	// Initial state
 	simulations: [],
 	isSimulationLoading: false,
 	hasMoreSimulation: false,
 	currentSimulationPage: 0,
 
-	loadSimulations: async () => {
-		const currentSimulationPage = get().currentSimulationPage;
-		if (currentSimulationPage === 0) {
+	currentSimulation: null,
+	isLoadingCurrentSimulation: false,
+
+	// Actions
+	resetSimulations: () => {
+		set({
+			simulations: [],
+			currentSimulationPage: 0,
+			hasMoreSimulation: false,
+			currentSimulation: null,
+		});
+	},
+
+	setCurrentSimulation: async (id?: number | null) => {
+		if (!id) {
+			set({ currentSimulation: null });
+			return;
+		}
+
+		set({ isLoadingCurrentSimulation: true });
+
+		try {
+			const simulation = await simulationService.getById(id);
+			set({
+				currentSimulation: simulation || null,
+				isLoadingCurrentSimulation: false,
+			});
+		} catch (error) {
+			console.error('Failed to load current simulation:', error);
+			set({
+				currentSimulation: null,
+				isLoadingCurrentSimulation: false,
+			});
+		}
+	},
+
+	loadSimulationList: async (forceReset: boolean = false) => {
+		const { currentSimulationPage } = get();
+
+		// Reset on first page or when forced
+		if (currentSimulationPage === 0 || forceReset) {
 			set({
 				simulations: [],
 				currentSimulationPage: 0,
@@ -47,104 +88,63 @@ export const createSimulationSlice: StateCreator<
 		}
 
 		set({ isSimulationLoading: true });
-		try {
-			const pinnedPersona = get().getPinnedPersona();
-			const pinnedApplication = get().getPinnedApplication();
 
-			const { data, hasMore } = await simulationService.queryBy({
-				personaId: pinnedPersona?.id,
-				applicationId: pinnedApplication?.id,
-				limit: 10,
-				offset: currentSimulationPage * 10,
-			});
+		try {
+			const pinnedPersona = (get() as PlaygroundStore).getPinnedPersona();
+			const pinnedApplication = (get() as PlaygroundStore).getPinnedApplication();
+
+			const { data, hasMore } = await simulationService.queryBy(
+				{
+					personaId: pinnedPersona?.id,
+					applicationId: pinnedApplication?.id,
+					limit: 10,
+					offset: (forceReset ? 0 : currentSimulationPage) * 10,
+				},
+				['id', 'task', 'status', 'createdAt', 'updatedAt'],
+			);
 
 			set(({ simulations }) => ({
-				simulations: currentSimulationPage === 0 ? data : [...simulations, ...data],
+				simulations: currentSimulationPage === 0 || forceReset ? data : [...simulations, ...data],
 				hasMoreSimulation: hasMore,
-				currentSimulationPage: currentSimulationPage + 1,
+				currentSimulationPage: (forceReset ? 0 : currentSimulationPage) + 1,
 				isSimulationLoading: false,
 			}));
 		} catch (error) {
-			console.error('Failed to load simulations:', error);
+			console.error('Failed to load simulation list:', error);
 			set({ isSimulationLoading: false });
 		}
 	},
 
-	removeSimulation: async (id) => {
+	createSimulation: async (data: SimulationInsert) => {
+		const simulation = await simulationService.add(data);
+
+		const listItem = {
+			id: simulation.id,
+			task: simulation.task,
+			status: simulation.status,
+			createdAt: simulation.createdAt,
+			updatedAt: simulation.updatedAt,
+		};
+
+		set(({ simulations }) => ({
+			simulations: [listItem, ...simulations],
+			currentSimulation: simulation,
+		}));
+		return simulation;
+	},
+
+	updateSimulationInList: (simulation: SimulationSelect) => {
+		set(({ simulations }) => ({
+			simulations: simulations.map((s) => (s.id === simulation.id ? simulation : s)),
+		}));
+	},
+
+	removeSimulation: async (id: number) => {
+		const currentSimulation = get().currentSimulation;
 		await simulationService.remove(id);
-		set((state) => ({
-			simulations: state.simulations.filter((s) => s.id !== id),
+		set(({ simulations }) => ({
+			simulations: simulations.filter((s) => s.id !== id),
+			currentSimulation: currentSimulation?.id === id ? null : currentSimulation,
 		}));
-	},
-
-	handlePinnedSimulation: async (simulationId) => {
-		if (!simulationId) {
-			set((state) => ({
-				simulations: state.simulations.map((s) => ({
-					...s,
-					pinned: false,
-				})),
-			}));
-			return;
-		}
-
-		await simulationService.togglePin(simulationId);
-		set((state) => ({
-			simulations: state.simulations.map((s) => ({
-				...s,
-				pinned: s.id === simulationId ? !s.pinned : false,
-			})),
-		}));
-	},
-
-	getPinnedSimulation: () => {
-		return get().simulations.find((s) => s.pinned) || null;
-	},
-
-	handleRunSimulation: async () => {
-		const { taskInput, getPinnedPersona, getPinnedApplication, handlePinnedSimulation } = get();
-
-		if (!taskInput.trim()) {
-			toast.error('Please enter a task description');
-			return;
-		}
-
-		const pinnedPersona = getPinnedPersona();
-
-		if (!pinnedPersona) {
-			toast.error('Missing pinned persona');
-			return;
-		}
-
-		const pinnedApplication = getPinnedApplication();
-
-		if (!pinnedApplication) {
-			toast.error('Missing pinned application');
-			return;
-		}
-
-		try {
-			const simulation = await simulationService.add({
-				personaId: pinnedPersona.id,
-				applicationId: pinnedApplication.id,
-				task: taskInput,
-				status: 'running',
-				state: null,
-			});
-
-			await handlePinnedSimulation(simulation.id);
-			await simulationService.runStreaming(simulation.id);
-
-			toast.success('Simulation started!');
-		} catch (error) {
-			toast.error('Failed to start simulation');
-			console.error(error);
-		}
-	},
-
-	handleStopSimulation: () => {
-		// Currently we don't have a stop method in simulationService
-		// The simulation will naturally end when the agent completes its task
-		toast.info('Simulation stopped');
 	},
 });

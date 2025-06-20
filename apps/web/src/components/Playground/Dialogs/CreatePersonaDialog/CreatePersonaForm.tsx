@@ -42,6 +42,7 @@ export function CreatePersonaForm({
 				behaviorTraits: data.behaviorTraits.length > 0 ? data.behaviorTraits : null,
 				preferences: Object.keys(data.preferences).length > 0 ? data.preferences : null,
 				pinned: data.pinned,
+				language: data.language,
 			};
 
 			await onSubmit(submitData);

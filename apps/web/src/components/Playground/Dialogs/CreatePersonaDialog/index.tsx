@@ -32,6 +32,7 @@ function personaToFormData(persona: PersonaSelect): PersonaFormData {
 		behaviorTraits: (persona.behaviorTraits as any) || [],
 		preferences: persona.preferences || {},
 		pinned: persona.pinned,
+		language: persona.language,
 	};
 }
 

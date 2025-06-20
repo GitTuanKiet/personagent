@@ -5,7 +5,11 @@ import type {
 	MemoryFS as MemoryFSType,
 } from '@electric-sql/pglite';
 import type { vector as vectorType } from '@electric-sql/pglite/vector';
-import type { DatabaseLoadingCallbacks, MigrationTableItem } from './types';
+import {
+	ClientDatabaseInitStage,
+	type DatabaseLoadingCallbacks,
+	type MigrationTableItem,
+} from './types';
 import { wyhash } from '@/lib/wyhash';
 
 import migrations from './migrations.json';
@@ -49,7 +53,7 @@ export class DatabaseConnection {
 
 	private async loadWasmModule() {
 		const start = Date.now();
-		this.callbacks?.onStateChange?.('loadingWasm');
+		this.callbacks?.onStateChange?.(ClientDatabaseInitStage.LoadingWasm);
 
 		const response = await fetch(this.WASM_CDN_URL);
 
@@ -104,7 +108,7 @@ export class DatabaseConnection {
 
 	private async loadDependencies() {
 		const start = Date.now();
-		this.callbacks?.onStateChange?.('loadingDependencies');
+		this.callbacks?.onStateChange?.(ClientDatabaseInitStage.LoadingDependencies);
 
 		const imports = [
 			import('@electric-sql/pglite').then((m) => ({
@@ -184,7 +188,7 @@ export class DatabaseConnection {
 
 		const start = Date.now();
 		try {
-			this.callbacks?.onStateChange?.('migrating');
+			this.callbacks?.onStateChange?.(ClientDatabaseInitStage.Migrating);
 
 			// refs: https://github.com/drizzle-team/drizzle-orm/discussions/2532
 			// @ts-expect-error
@@ -215,7 +219,7 @@ export class DatabaseConnection {
 				if (this._db) return this._db;
 
 				const time = Date.now();
-				this.callbacks?.onStateChange?.('initializing');
+				this.callbacks?.onStateChange?.(ClientDatabaseInitStage.Initializing);
 
 				const { fsBundle, PGlite, MemoryFS, IdbFs, vector } = await this.loadDependencies();
 
@@ -249,17 +253,17 @@ export class DatabaseConnection {
 
 				await this.migrate(true);
 
-				this.callbacks?.onStateChange?.('finished');
+				this.callbacks?.onStateChange?.(ClientDatabaseInitStage.Finished);
 				console.log(`✅ Database initialized in ${Date.now() - time}ms`);
 
 				await new Promise((resolve) => setTimeout(resolve, 50));
 
-				this.callbacks?.onStateChange?.('ready');
+				this.callbacks?.onStateChange?.(ClientDatabaseInitStage.Ready);
 
 				return this.db;
 			} catch (e) {
 				this.initPromise = undefined;
-				this.callbacks?.onStateChange?.('error');
+				this.callbacks?.onStateChange?.(ClientDatabaseInitStage.Error);
 				const error = e as Error;
 
 				let migrationsTableData: MigrationTableItem[] = [];

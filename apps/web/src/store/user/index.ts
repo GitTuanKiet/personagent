@@ -1,7 +1,10 @@
-import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
+import { shallow } from 'zustand/shallow';
+import { createWithEqualityFn } from 'zustand/traditional';
+import type { StateCreator } from 'zustand/vanilla';
 import { themeUtils } from './utils';
 import { persistenceManager, persistenceUtils } from './persistence';
+import { createDevtools } from '../createDevtools';
 
 // Import all slices
 import {
@@ -26,7 +29,7 @@ import {
 } from './slices';
 
 // Combined store interface
-interface UserStoreState
+export interface UserStore
 	extends FingerprintSlice,
 		ThemeSlice,
 		UIPreferencesSlice,
@@ -37,22 +40,21 @@ interface UserStoreState
 		NotificationSlice,
 		AIProviderSlice {}
 
-export const useUserStore = create<UserStoreState>()(
-	subscribeWithSelector((...a) => {
-		const store = {
-			...createFingerprintSlice(...a),
-			...createThemeSlice(...a),
-			...createUIPreferencesSlice(...a),
-			...createUserPreferencesSlice(...a),
-			...createDialogSlice(...a),
-			...createPanelSlice(...a),
-			...createSettingsSlice(...a),
-			...createNotificationSlice(...a),
-			...createAIProviderSlice(...a),
-		};
+const createStore: StateCreator<UserStore, [['zustand/devtools', never]]> = (...a) => ({
+	...createFingerprintSlice(...a),
+	...createThemeSlice(...a),
+	...createUIPreferencesSlice(...a),
+	...createUserPreferencesSlice(...a),
+	...createDialogSlice(...a),
+	...createPanelSlice(...a),
+	...createSettingsSlice(...a),
+	...createNotificationSlice(...a),
+	...createAIProviderSlice(...a),
+});
 
-		return store;
-	}),
+export const useUserStore = createWithEqualityFn<UserStore>()(
+	subscribeWithSelector(createDevtools('user')(createStore)),
+	shallow,
 );
 
 // Initialize settings and persistence on module load

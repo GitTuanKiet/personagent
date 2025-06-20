@@ -32,14 +32,11 @@ interface GlobalState {
 
 export interface GlobalStore extends GlobalState, GlobalAction {}
 
-export const initialState: GlobalState = {
+const initialState: GlobalState = {
 	initClientDBStage: ClientDatabaseInitStage.Idle,
 } as const;
 
-export const createStore: StateCreator<GlobalStore, [['zustand/devtools', never]]> = (
-	set,
-	get,
-) => ({
+const createStore: StateCreator<GlobalStore, [['zustand/devtools', never]]> = (set, get) => ({
 	...initialState,
 	initializeClientDB: async (params) => {
 		// if the db has started initialized or not error, just skip.

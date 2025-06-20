@@ -6,7 +6,7 @@ export const useTerminalControls = () => {
 	const { terminalPanelCollapsed, terminalPosition } = useUserStore((state) => state.ui);
 	const { panels } = useUserStore((state) => state);
 	const updateUIPreferences = useUserStore((state) => state.updateUIPreferences);
-	const updatePanelSize = useUserStore.getState().setPanelSize;
+	const setPanelSize = useUserStore((state) => state.setPanelSize);
 
 	const isRight = terminalPosition === 'right';
 
@@ -19,14 +19,14 @@ export const useTerminalControls = () => {
 			const currentWidth = panels.resizablePanelSize;
 			// Toggle between maximized (80%) and normal (35%)
 			const newWidth = currentWidth >= 70 ? 35 : 80;
-			updatePanelSize(newWidth);
+			setPanelSize(newWidth);
 		} else {
 			const currentHeight = panels.resizablePanelSize;
 			// Toggle between maximized (95%) and normal (25%)
 			const newHeight = currentHeight >= 80 ? 25 : 95;
-			updatePanelSize(newHeight);
+			setPanelSize(newHeight);
 		}
-	}, [isRight, panels.resizablePanelSize, updatePanelSize]);
+	}, [isRight, panels.resizablePanelSize, setPanelSize]);
 
 	const togglePosition = useCallback(() => {
 		updateUIPreferences({

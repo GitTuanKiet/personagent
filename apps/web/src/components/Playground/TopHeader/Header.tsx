@@ -1,5 +1,6 @@
 'use client';
 
+import { memo } from 'react';
 import { Button } from '@workspace/ui/components/button';
 import {
 	Select,
@@ -18,13 +19,13 @@ import PanelModeToggle from './PanelModeToggle';
 import BaseHeader from './BaseHeader';
 import type { ApplicationSelect } from '@/database/client/schema';
 
-export default function Header() {
+export default memo(function Header() {
 	// Playground actions
 	const {
 		applications,
 		handlePinnedApplication,
 		getPinnedApplication,
-		handleNewSimulation,
+		newSimulation,
 		deleteApplication,
 		setEditingApplication,
 	} = usePlaygroundStore();
@@ -85,7 +86,7 @@ export default function Header() {
 								<MenuIcon size={16} />
 							</Button>
 							<Button
-								onClick={() => handleNewSimulation()}
+								onClick={() => newSimulation()}
 								variant="ghost"
 								size="sm"
 								className="p-2"
@@ -167,4 +168,4 @@ export default function Header() {
 			</div>
 		</BaseHeader>
 	);
-}
+});

@@ -1,27 +1,7 @@
-import type { BaseMessage, MessageContent, MessageContentComplex } from '@langchain/core/messages';
-import { SimulationSelect } from '@/database/client/schema';
+import type { ToolMessage as LangChainToolMessage } from '@langchain/core/messages';
+import type { BrowserTool } from '@pag/langgraph-bua';
 
-export interface ChatSimulation {
-	id: string;
-	task: string;
-	status: string;
-	createdAt: string;
-	state?: {
-		messages?: BaseMessage[];
-	};
+export interface ToolMessage extends Omit<LangChainToolMessage, 'name' | 'status'> {
+	name: BrowserTool;
+	status: 'success' | 'error';
 }
-
-export interface TaskDisplayProps {
-	simulation?: SimulationSelect | null;
-}
-
-export interface MessageListProps {
-	messages: BaseMessage[];
-}
-
-export interface MessageItemProps {
-	message: BaseMessage;
-	index: number;
-}
-
-export { MessageContent, MessageContentComplex };

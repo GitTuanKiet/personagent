@@ -6,8 +6,8 @@
 export function assert<T>(condition: T, msg?: string): asserts condition {
 	if (!condition) {
 		const error = new Error(msg ?? 'Invalid assertion');
-		if ((Error as any).hasOwnProperty('captureStackTrace')) {
-			(Error as any).captureStackTrace(error, assert);
+		if (Error.hasOwnProperty('captureStackTrace')) {
+			Error.captureStackTrace(error, assert);
 		} else if (error.stack) {
 			error.stack = error.stack.split('\n').slice(1).join('\n');
 		}

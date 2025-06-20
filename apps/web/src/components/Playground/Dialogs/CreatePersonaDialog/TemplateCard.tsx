@@ -19,6 +19,7 @@ export function TemplateCard({ persona, onSelect }: TemplateCardProps) {
 			<CardContent className="space-y-3">
 				<div className="flex gap-2 text-sm">
 					<Badge variant="outline">{persona.ageGroup}</Badge>
+					<Badge variant="outline">{persona.language}</Badge>
 					<Badge variant="outline">{persona.digitalSkillLevel} skill</Badge>
 				</div>
 				<div className="flex flex-wrap gap-1">

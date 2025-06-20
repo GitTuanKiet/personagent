@@ -9,8 +9,6 @@ export const DEFAULT_FORM_DATA: ApplicationFormData = {
 	recursionLimit: 100,
 	useVision: false,
 	env: {},
-	wssUrl: '',
-	cdpUrl: '',
 	pinned: false,
 };
 

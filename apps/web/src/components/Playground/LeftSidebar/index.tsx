@@ -1,5 +1,6 @@
 'use client';
 
+import { memo } from 'react';
 import { useUserStore } from '@/store/user';
 import TopHeader from './TopHeader';
 import ActionButtons from './ActionButtons';
@@ -7,7 +8,7 @@ import SimulationList from './SimulationList';
 import BottomFooter from './BottomFooter';
 import { Label } from '@workspace/ui/components/label';
 
-export function Sidebar() {
+export const Sidebar = memo(function Sidebar() {
 	const { sidebarCollapsed } = useUserStore((state) => state.ui);
 
 	if (sidebarCollapsed) {
@@ -15,14 +16,13 @@ export function Sidebar() {
 	}
 
 	return (
-		<div className="w-80 border-r bg-muted/30 flex flex-col h-screen">
+		<div className="w-1/6 min-w-[240px] max-w-[300px] border-r bg-muted/30 flex flex-col h-screen">
 			{/* Fixed height sections */}
 			<TopHeader />
 			<ActionButtons />
 
 			{/* Flexible height section */}
 			<div className="flex-1 min-h-0">
-				<Label className="text-xs font-medium px-2 py-1">Simulations</Label>
 				<SimulationList />
 			</div>
 
@@ -30,4 +30,4 @@ export function Sidebar() {
 			<BottomFooter />
 		</div>
 	);
-}
+});

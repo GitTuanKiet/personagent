@@ -12,7 +12,7 @@ export default defineConfig({
 	minifyWhitespace: true,
 	minifyIdentifiers: false,
 	target: 'node22',
-	external: ['patchright', 'playwright'],
+	external: ['patchright'],
 	dts: true,
 	async onSuccess() {
 		if (typeof Bun === 'undefined') {

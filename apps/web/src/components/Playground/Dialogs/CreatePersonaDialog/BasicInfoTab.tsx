@@ -16,35 +16,20 @@ export function BasicInfoTab() {
 	const form = useFormContext<PersonaFormData>();
 
 	return (
-		<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-			<div className="space-y-4">
-				<FormField
-					control={form.control}
-					name="name"
-					render={({ field }) => (
-						<FormItem>
-							<FormLabel>Name *</FormLabel>
-							<FormControl>
-								<Input placeholder="Enter persona name..." {...field} />
-							</FormControl>
-							<FormMessage />
-						</FormItem>
-					)}
-				/>
-
-				<FormField
-					control={form.control}
-					name="pinned"
-					render={({ field }) => (
-						<FormItem className="flex flex-row items-center space-x-2 space-y-0">
-							<FormControl>
-								<Switch checked={field.value} onCheckedChange={field.onChange} />
-							</FormControl>
-							<FormLabel className="font-normal">Pin this persona</FormLabel>
-						</FormItem>
-					)}
-				/>
-			</div>
+		<div className="space-y-6">
+			<FormField
+				control={form.control}
+				name="name"
+				render={({ field }) => (
+					<FormItem>
+						<FormLabel>Name *</FormLabel>
+						<FormControl>
+							<Input placeholder="Enter persona name..." {...field} />
+						</FormControl>
+						<FormMessage />
+					</FormItem>
+				)}
+			/>
 
 			<FormField
 				control={form.control}
@@ -53,9 +38,25 @@ export function BasicInfoTab() {
 					<FormItem>
 						<FormLabel>Description</FormLabel>
 						<FormControl>
-							<Textarea placeholder="Enter description..." rows={4} {...field} />
+							<Textarea placeholder="Enter description..." rows={3} {...field} />
 						</FormControl>
 						<FormMessage />
+					</FormItem>
+				)}
+			/>
+
+			<FormField
+				control={form.control}
+				name="pinned"
+				render={({ field }) => (
+					<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+						<div className="space-y-0.5">
+							<FormLabel className="text-base">Pin Persona</FormLabel>
+							<FormDescription>Keep this persona at the top of your list</FormDescription>
+						</div>
+						<FormControl>
+							<Switch checked={field.value} onCheckedChange={field.onChange} />
+						</FormControl>
 					</FormItem>
 				)}
 			/>

@@ -29,8 +29,8 @@ export class TimeoutError extends Error {
  * @param timeout - The timeout in milliseconds
  * @returns A new timed defer object
  */
-export function TimedDefer(timeout = 5000): Defer<any> {
-	const self: Defer<any> = {} as Defer<any>;
+export function TimedDefer(timeout = 5000): Defer<void> {
+	const self: Defer<void> = {} as Defer<void>;
 	self.promise = new Promise((resolve, reject) => {
 		let timeoutHandle: NodeJS.Timeout | null = setTimeout(() => {
 			self.reject(new TimeoutError(`Timed out after ${timeout}ms.`));
@@ -58,15 +58,15 @@ export function TimedDefer(timeout = 5000): Defer<any> {
  * Creates a new GC proof defer object
  * @returns A new GC proof defer object
  */
-export function GCProofDefer<T = any>(): Promise<T> {
+export function GCProofDefer<T = unknown>(): Promise<T> {
 	let resolve: ResolveFn<T>;
 	let reject: RejectFn;
 	const thePromise = new Promise<T>((res, rej) => {
 		resolve = res;
 		reject = rej;
-	});
-	(thePromise as any).__resolve = resolve!;
-	(thePromise as any).__reject = reject!;
+	}) as Promise<T> & { __resolve: ResolveFn<T>; __reject: RejectFn };
+	thePromise.__resolve = resolve!;
+	thePromise.__reject = reject!;
 	return thePromise;
 }
 

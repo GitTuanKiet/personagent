@@ -1,5 +1,6 @@
 'use client';
 
+import { memo } from 'react';
 import { useUserStore } from '@/store/user';
 import CreatePersonaDialog from '../Dialogs/CreatePersonaDialog';
 import { TopHeader } from './TopHeader';
@@ -7,7 +8,7 @@ import { PersonaList } from './PersonaList';
 import { PersonaProfile } from './PersonaProfile';
 import { ActionButtons } from './ActionButtons';
 
-export function PersonaSidebar() {
+export const PersonaSidebar = memo(function PersonaSidebar() {
 	const { personaSidebarCollapsed } = useUserStore((state) => state.ui);
 
 	if (personaSidebarCollapsed) {
@@ -31,4 +32,4 @@ export function PersonaSidebar() {
 			<CreatePersonaDialog />
 		</div>
 	);
-}
+});

@@ -33,8 +33,6 @@ function applicationToFormData(
 		recursionLimit: application.recursionLimit,
 		useVision: application.useVision,
 		env: application.env || {},
-		wssUrl: application.wssUrl || '',
-		cdpUrl: application.cdpUrl || '',
 		pinned: application.pinned,
 	};
 }
@@ -102,8 +100,6 @@ export function CreateApplicationForm({
 				credentials: null,
 				timeout: data.timeout,
 				env: Object.keys(data.env).length > 0 ? data.env : null,
-				wssUrl: data.wssUrl.trim() || null,
-				cdpUrl: data.cdpUrl.trim() || null,
 				recursionLimit: data.recursionLimit,
 				useVision: data.useVision,
 				pinned: data.pinned,

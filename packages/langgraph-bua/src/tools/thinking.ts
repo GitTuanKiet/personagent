@@ -3,7 +3,7 @@ import { DynamicStructuredAction } from './base';
 
 export const thinkingAction = new DynamicStructuredAction({
 	name: 'thinking',
-	description: `A reflective tool used when the agent encounters uncertainty, repeating actions, or needs to reassess the strategy before proceeding.`,
+	description: `A detailed tool for storing your thoughts and reasoning.`,
 	schema: z.object({
 		thoughts: z
 			.string()
@@ -12,6 +12,6 @@ export const thinkingAction = new DynamicStructuredAction({
 			),
 	}),
 	func: async (input) => {
-		return input.thoughts;
+		return { content: [{ type: 'text', text: input.thoughts }] };
 	},
 });

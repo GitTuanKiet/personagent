@@ -6,6 +6,7 @@ export { sublimeSearch } from './search/sublimeSearch';
 export { sortByProperty } from './sort/sortByProperty';
 export { randomString } from './string/randomString';
 export { truncate } from './string/truncate';
+export { wyhash } from './wyhash';
 export * from './assert';
 export * from './constants';
 export * from './deep-copy';

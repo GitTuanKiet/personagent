@@ -21,6 +21,8 @@ export const personaFormSchema = z.object({
 
 	preferences: z.record(z.string(), z.any()),
 
+	language: z.enum(['vietnamese', 'english']),
+
 	pinned: z.boolean(),
 });
 

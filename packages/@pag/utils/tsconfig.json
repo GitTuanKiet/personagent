@@ -8,5 +8,5 @@
 		"isolatedModules": true,
 		"incremental": false
 	},
-	"include": ["src/**/*.ts", "src/**/*.tsx", "vite.config.ts", "tsup.config.ts"]
+	"include": ["src/**/*.ts", "src/**/*.tsx", "vite.config.mts", "tsup.config.ts"]
 }

@@ -3,49 +3,30 @@
 import { useEffect } from 'react';
 import { usePlaygroundStore } from '@/store/playground';
 import { useGlobalStore } from '@/store/global';
-import { Header } from './TopHeader';
-import { Sidebar } from './LeftSidebar';
-import { PersonaSidebar } from './RightSidebar';
-import MainContent from './MainContent';
-import { CreateApplicationDialog, CreatePersonaDialog, PersonalizationDialog } from './Dialogs';
 import { ClientDatabaseInitStage } from '@/database/client/types';
+import { useParams } from 'next/navigation';
+import MainContent from './MainContent';
 
 export default function PlaygroundPage() {
-	// Main store for data loading only
-	const { loadPersonas, getApplications } = usePlaygroundStore();
+	const params = useParams();
+	const simulationId = params?.simulationId as string | undefined;
 
-	// UI states from user store - separate calls to avoid object creation
+	// Get simulation loading function
+	const setCurrentSimulation = usePlaygroundStore((state) => state.setCurrentSimulation);
 	const initClientDBStage = useGlobalStore((state) => state.initClientDBStage);
 
-	// Load initial data
+	// Set current simulation ID when component mounts or ID changes
 	useEffect(() => {
-		if (initClientDBStage === ClientDatabaseInitStage.Ready) {
-			loadPersonas();
-			getApplications();
+		if (initClientDBStage !== ClientDatabaseInitStage.Ready) {
+			console.log('⏳ DB not ready, skipping...');
+			return;
 		}
-	}, [loadPersonas, getApplications, initClientDBStage]);
 
-	return (
-		<div className="h-screen flex bg-background">
-			{/* Left Sidebar - Simulation History */}
-			<Sidebar />
+		const newSimulationId =
+			simulationId === 'new' ? null : simulationId ? parseInt(simulationId) : null;
 
-			{/* Main Content Area */}
-			<div className="flex-1 flex flex-col">
-				{/* Top Header */}
-				<Header />
+		setCurrentSimulation(newSimulationId);
+	}, [simulationId, setCurrentSimulation, initClientDBStage]);
 
-				{/* Main Content */}
-				<MainContent />
-			</div>
-
-			{/* Right Sidebar - Persona Selection */}
-			<PersonaSidebar />
-
-			{/* Dialogs */}
-			<CreateApplicationDialog />
-			<CreatePersonaDialog />
-			<PersonalizationDialog />
-		</div>
-	);
+	return <MainContent />;
 }

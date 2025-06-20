@@ -5,6 +5,7 @@ import type { JsonObject } from '../types';
  * @param value - The value to check
  * @returns True if the value is a traversable object, false otherwise
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function isTraversableObject(value: any): value is JsonObject {
 	return value && typeof value === 'object' && !Array.isArray(value) && !!Object.keys(value).length;
 }

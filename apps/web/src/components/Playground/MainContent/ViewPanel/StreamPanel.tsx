@@ -7,15 +7,18 @@ import { MonitorIcon, EyeIcon, MaximizeIcon } from 'lucide-react';
 import { usePlaygroundStore } from '@/store/playground';
 
 export default function StreamPanel() {
-	const { getPinnedSimulation } = usePlaygroundStore();
-	const pinnedSimulation = getPinnedSimulation();
-	const isRunning = pinnedSimulation?.status === 'running';
+	const { getPinnedApplication } = usePlaygroundStore();
+	const currentSimulation = usePlaygroundStore((state) => state.currentSimulation);
+	const pinnedApplication = getPinnedApplication();
+	const isRunning = currentSimulation?.status === 'running';
 
-	const [streamFailed, setStreamFailed] = useState(false);
+	const streamUrl =
+		pinnedApplication &&
+		`/api/stream/${pinnedApplication.fingerprint + '_' + pinnedApplication.id}`;
+
+	const [streamFailed, setStreamFailed] = useState(!streamUrl);
 	const [isFullscreen, setIsFullscreen] = useState(false);
 	const streamContainerRef = useRef<HTMLDivElement>(null);
-
-	const streamUrl = '/api/stream';
 
 	const handleStreamError = () => {
 		setStreamFailed(true);
@@ -80,7 +83,7 @@ export default function StreamPanel() {
 						{isRunning && <EyeIcon className="text-green-500" size={12} />}
 					</div>
 					<div className="flex items-center gap-2">
-						{pinnedSimulation && <Badge variant="secondary">#{pinnedSimulation.id}</Badge>}
+						{currentSimulation && <Badge variant="secondary">#{currentSimulation.id}</Badge>}
 						<div className="flex gap-1">
 							<Button
 								onClick={handleFullscreen}
@@ -102,13 +105,15 @@ export default function StreamPanel() {
 				className={`flex-1 bg-black relative overflow-hidden cursor-pointer ${isFullscreen ? 'fixed inset-0 z-50' : ''}`}
 			>
 				{/* Always try to load stream image */}
-				<img
-					src={streamUrl}
-					alt="Browser Agent Stream"
-					className={`w-full h-full object-contain ${streamFailed ? 'hidden' : ''}`}
-					onError={handleStreamError}
-					onLoad={handleStreamLoad}
-				/>
+				{streamUrl && (
+					<img
+						src={streamUrl}
+						alt="Browser Agent Stream"
+						className={`w-full h-full object-contain ${streamFailed ? 'hidden' : ''}`}
+						onError={handleStreamError}
+						onLoad={handleStreamLoad}
+					/>
+				)}
 
 				{/* Fallback content when stream fails or returns non-image */}
 				{streamFailed && (

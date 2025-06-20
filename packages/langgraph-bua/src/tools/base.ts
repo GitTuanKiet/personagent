@@ -1,30 +1,35 @@
 import type z from 'zod';
-import type { Page } from 'playwright';
+import type { Page } from 'patchright';
+import type { RunnableConfig } from '@langchain/core/runnables';
+import { getConfig } from '@langchain/langgraph';
 import { DynamicStructuredTool } from '@langchain/core/tools';
-import { browserContainer, BrowserAction } from '../browser';
+import { browserContainer, BrowserManager } from 'pag-browser';
+import { getConfigurationWithDefaults } from '../types';
+import type { MessageContentComplex } from '@langchain/core/messages';
 
-export function getBrowserInstance() {
-	return browserContainer.get(BrowserAction);
-}
+export type ActionResult = MessageContentComplex[];
 
-export type DynamicStructuredActionFields<Input extends z.AnyZodObject> = ConstructorParameters<
-	typeof DynamicStructuredTool<Input, z.output<Input>, z.input<Input>, string>
->[0] & {
-	pageMatcher?: (page: Page) => boolean;
-};
+export type DynamicStructuredActionFields<Input extends z.ZodTypeAny = z.ZodTypeAny> =
+	ConstructorParameters<
+		typeof DynamicStructuredTool<Input, z.output<Input>, z.input<Input>, ActionResult>
+	>[0] & {
+		pageMatcher?: (page: Page) => boolean;
+	};
 
-export class DynamicStructuredAction<Input extends z.AnyZodObject> extends DynamicStructuredTool<
-	Input,
-	z.output<Input>,
-	z.input<Input>,
-	string
-> {
+export class DynamicStructuredAction<
+	Input extends z.ZodTypeAny = z.ZodTypeAny,
+> extends DynamicStructuredTool<Input, z.output<Input>, z.input<Input>, ActionResult> {
 	pageMatcher?: (page: Page) => boolean;
 
 	constructor(fields: DynamicStructuredActionFields<Input>) {
 		const { pageMatcher, ...rest } = fields;
 		super(rest);
 		this.pageMatcher = pageMatcher;
+	}
+
+	static async getBrowserSession(config?: RunnableConfig<Record<string, any>>) {
+		const { sessionId, browserProfile } = getConfigurationWithDefaults(config ?? getConfig());
+		return browserContainer.get(BrowserManager).getOrCreateSession({ sessionId, browserProfile });
 	}
 }
 

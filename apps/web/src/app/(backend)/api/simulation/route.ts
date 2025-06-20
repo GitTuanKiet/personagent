@@ -5,12 +5,14 @@ import type { BUAState } from '@pag/langgraph-bua';
 export async function POST(req: NextRequest) {
 	const { configuration: configurationFromRequest, state: stateFromRequest } = await req.json();
 
-	const configuration = {
+	const buaParams = {
 		...configurationFromRequest,
 		browserProfile: {
 			...configurationFromRequest.browserProfile,
 			headless: true,
+			viewport: undefined,
 		},
+		recursionLimit: 10,
 	};
 
 	const state: BUAState = {
@@ -18,30 +20,27 @@ export async function POST(req: NextRequest) {
 		...stateFromRequest,
 	};
 
-	console.debug({ configuration, state });
-
-	const buaGraph = createBua(configuration);
+	const buaGraph = createBua(buaParams);
 
 	const stream = new ReadableStream({
 		async start(controller) {
 			try {
 				for await (const chunk of await buaGraph.stream(state, {
 					maxConcurrency: 1,
-					streamMode: 'updates',
+					streamMode: 'values',
+					signal: req.signal,
 				})) {
-					console.log('🚀 ~ start ~ chunk:', chunk);
 					controller.enqueue(
 						new TextEncoder().encode(`event: data\ndata: ${JSON.stringify(chunk)}\n\n`),
 					);
 				}
-				controller.close();
 			} catch (err) {
-				console.log('🚀 ~ start ~ err:', err);
 				controller.enqueue(
 					new TextEncoder().encode(
 						`event: error\ndata: ${JSON.stringify({ error: String(err) })}\n\n`,
 					),
 				);
+			} finally {
 				controller.close();
 			}
 		},

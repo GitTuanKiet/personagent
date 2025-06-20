@@ -1,42 +1,45 @@
 import type { LangGraphRunnableConfig } from '@langchain/langgraph';
 import { isGraphInterrupt } from '@langchain/langgraph';
-import { AIMessage } from '@langchain/core/messages';
-import type { BrowserToolCallResult, BUAState, BUAUpdate } from '../types';
+import { BaseMessage, ToolMessage } from '@langchain/core/messages';
+import { getConfigurationWithDefaults, type BUAState, type BUAUpdate } from '../types';
 import type { DynamicStructuredAction } from '../tools';
 import { BROWSER_TOOLS } from '../tools';
-import { BrowserError, BrowserAction, browserContainer, DOMElementNode } from '../browser';
-import type { z } from 'zod';
-import { sleep } from '../browser/utils';
+import { BrowserManager, browserContainer, DOMElementNode } from 'pag-browser';
 import type { BrowserToolCall } from '../utils';
 
 export async function executeAction(
 	state: BUAState,
 	config: LangGraphRunnableConfig,
 ): Promise<BUAUpdate> {
-	const browserAction = browserContainer.get(BrowserAction);
+	const browserManager = browserContainer.get(BrowserManager);
 
-	const { sessionId, actions, nSteps: currentNSteps } = state;
+	const { sessionId } = getConfigurationWithDefaults(config);
+	const { actions, nSteps: currentNSteps } = state;
 	if (!sessionId) {
-		throw new BrowserError('Cannot execute action without a browser session id');
+		throw new Error('Cannot execute action without a browser session id');
 	}
 
-	const cachedSelectorMap = await browserAction.getSelectorMap();
+	const session = await browserManager.getSession(sessionId);
+	if (!session) {
+		throw new Error('Cannot execute action without a browser session');
+	}
+
+	const cachedSelectorMap = await session.getSelectorMap();
 	const cachedPathHashes = new Set(
 		Object.values(cachedSelectorMap).map((e: DOMElementNode) => e.hash.branchPathHash),
 	);
 
 	let nSteps = currentNSteps;
 
-	const messages: AIMessage[] = [];
-	const results: BrowserToolCallResult[] = [];
+	const messages: BaseMessage[] = [];
 	const performedActions: BrowserToolCall[] = [];
 
 	for (const [i, action] of actions.entries()) {
-		const tool = BROWSER_TOOLS[action.name]! as DynamicStructuredAction<z.AnyZodObject>;
+		const tool = BROWSER_TOOLS[action.name]! as unknown as DynamicStructuredAction;
 
 		if ('index' in action.args && i !== 0) {
 			const index = action.args.index;
-			const newSelectorMap = (await browserAction.getStateSummary(false)).selectorMap;
+			const newSelectorMap = (await session.getStateSummary(false)).selectorMap;
 
 			// Detect index change after previous action
 			const origTarget = cachedSelectorMap.get(index);
@@ -62,40 +65,35 @@ export async function executeAction(
 			}
 		}
 
+		let output;
 		try {
-			const output = await tool.invoke(action, config);
-
-			if (output.name === 'thinking') {
-				messages.push(new AIMessage({ content: output.content }));
-			} else {
-				results.push({
-					action: action.name,
-					result: typeof output === 'string' ? output : (output.content as string),
-				});
-				performedActions.push(action);
-			}
-
-			await sleep(browserAction.session.browserProfile.waitBetweenActions);
-
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		} catch (e: any) {
+			output = await tool.invoke(action, config);
+			output.status = 'success';
+			performedActions.push(action);
+		} catch (e) {
 			if (isGraphInterrupt(e)) {
 				// `NodeInterrupt` errors are a breakpoint to bring a human into the loop.
 				// As such, they are not recoverable by the agent and shouldn't be fed
 				// back. Instead, re-throw these errors even when `handleToolErrors = true`.
 				throw e;
 			}
-			results.push({
-				action: action.name,
-				result: `❌ Error: ${e.message}\n Please fix your mistakes.`,
-			});
+			if (output) {
+				output.status = 'error';
+			} else {
+				output = new ToolMessage({
+					name: action.name,
+					content: e instanceof Error ? e.message : String(e),
+					status: 'error',
+					tool_call_id: action.id!,
+				});
+			}
 		}
+
+		messages.push(output);
 	}
 
 	return {
-		sessionId: browserAction.session.browserPid?.toString(),
 		messages,
-		results,
 		nSteps,
 		actions: performedActions,
 	};

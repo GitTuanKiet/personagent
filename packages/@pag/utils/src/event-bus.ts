@@ -1,4 +1,4 @@
-// eslint-disable-next-line @typescript-eslint/ban-types
+// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
 export type CallbackFn = Function;
 
 type Payloads<ListenerMap> = {
@@ -7,7 +7,6 @@ type Payloads<ListenerMap> = {
 
 type Listener<Payload> = (payload: Payload) => void;
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface EventBus<ListenerMap extends Payloads<ListenerMap> = Record<string, unknown>> {
 	on<EventName extends keyof ListenerMap & string>(
 		eventName: EventName,

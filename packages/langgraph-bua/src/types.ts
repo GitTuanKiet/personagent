@@ -1,8 +1,16 @@
 import { Annotation, MessagesAnnotation } from '@langchain/langgraph';
 import type { LangGraphRunnableConfig } from '@langchain/langgraph';
 import type { SystemMessage } from '@langchain/core/messages';
-import type { BrowserProfileOptions } from './browser/profile';
+import type { IBrowserProfile } from 'pag-browser';
 import type { BrowserToolCall } from './utils';
+import { join } from 'node:path';
+
+function getUserDataDir(user?: string) {
+	const homeVarName = process.platform === 'win32' ? 'USERPROFILE' : 'HOME';
+	const userHome = process.env.USER_DATA_DIR ?? process.env[homeVarName] ?? process.cwd();
+
+	return join(userHome, '.browser', user ?? '');
+}
 
 // Copied from the OpenAI example repository
 // https://github.com/openai/openai-cua-sample-app/blob/eb2d58ba77ffd3206d3346d6357093647d29d99c/utils.py#L13
@@ -30,25 +38,11 @@ export const DEFAULT_ATTRIBUTES = [
 
 export const DEFAULT_MODEL = 'gpt-4o-mini';
 
-export type BrowserToolCallResult = {
-	action: BrowserToolCall['name'];
-	result: string;
-};
-
 export const BUAAnnotation = Annotation.Root({
 	/**
-	 * The message list between the user & assistant. This contains
-	 * messages, excluding the browser tool calls (except for the thinking tool).
+	 * The message list between the user & assistant.
 	 */
 	messages: MessagesAnnotation.spec.messages,
-	/**
-	 * The id of the browser session to use for this thread.
-	 * @default undefined
-	 */
-	sessionId: Annotation<string | undefined>({
-		reducer: (state, update) => update ?? state,
-		default: () => undefined,
-	}),
 	/**
 	 * List of actions to perform.
 	 */
@@ -63,7 +57,11 @@ export const BUAAnnotation = Annotation.Root({
 		reducer: (state, update) => {
 			for (const step of Object.keys(update).map(Number)) {
 				if (state[step]) {
-					state[step] = state[step].concat(update[step] ?? []);
+					const ids = new Set(state[step].map((action) => action.id));
+					state[step] = [
+						...state[step],
+						...(update[step] ?? []).filter((action) => !ids.has(action.id)),
+					];
 				} else {
 					state[step] = update[step] ?? [];
 				}
@@ -73,18 +71,18 @@ export const BUAAnnotation = Annotation.Root({
 		default: () => ({}),
 	}),
 	/**
-	 * List of results from the actions.
-	 */
-	results: Annotation<BrowserToolCallResult[]>({
-		reducer: (state, update) => state.concat(update),
-		default: () => [],
-	}),
-	/**
 	 * The number of steps taken.
 	 */
 	nSteps: Annotation<number>({
 		reducer: (_state, update) => update,
 		default: () => 0,
+	}),
+	/**
+	 * The pid of the browser process.
+	 */
+	browserPid: Annotation<number | undefined>({
+		reducer: (_state, update) => update,
+		default: () => undefined,
 	}),
 });
 
@@ -100,7 +98,8 @@ export const BUAConfigurable = Annotation.Root({
 	 * The attributes to include in the browser state.
 	 */
 	includeAttributes: Annotation<string[]>({
-		reducer: (_state, update) => update,
+		reducer: (_state, update) =>
+			Array.from(new Set([...DEFAULT_ATTRIBUTES, ...(Array.isArray(update) ? update : [update])])),
 		default: () => DEFAULT_ATTRIBUTES,
 	}),
 	/**
@@ -118,27 +117,19 @@ export const BUAConfigurable = Annotation.Root({
 		default: () => undefined,
 	}),
 	/**
-	 * The WSS URL to use for the browser instance.
-	 */
-	wssUrl: Annotation<string | undefined>({
-		reducer: (_state, update) => update,
-		default: () => undefined,
-	}),
-	/**
-	 * The CDP URL to use for the browser instance.
-	 */
-	cdpUrl: Annotation<string | undefined>({
-		reducer: (_state, update) => update,
-		default: () => undefined,
-	}),
-	/**
 	 * The browser profile options.
 	 */
-	browserProfile: Annotation<BrowserProfileOptions>({
+	browserProfile: Annotation<IBrowserProfile>({
 		reducer: (state, update) => ({ ...state, ...update }),
 		default: () => ({
 			blockedDomains: BLOCKED_DOMAINS,
 		}),
+	}),
+	/**
+	 * The id of the browser session to use for this thread.
+	 */
+	sessionId: Annotation<string>({
+		reducer: (state, update) => update ?? state,
 	}),
 });
 
@@ -151,16 +142,24 @@ export const BUAConfigurable = Annotation.Root({
 export function getConfigurationWithDefaults(
 	config: LangGraphRunnableConfig,
 ): typeof BUAConfigurable.State {
+	const sessionId = config.configurable?.sessionId ?? undefined;
+	if (!sessionId) {
+		throw new Error('sessionId is required');
+	}
+	const userDataDir = getUserDataDir(String(sessionId));
 	return {
 		model: config.configurable?.model ?? 'gpt-4o-mini',
-		includeAttributes: config.configurable?.includeAttributes ?? DEFAULT_ATTRIBUTES,
+		includeAttributes: Array.from(
+			new Set([...DEFAULT_ATTRIBUTES, ...(config.configurable?.includeAttributes ?? [])]),
+		),
 		useVision: config.configurable?.useVision ?? false,
 		prompt: config.configurable?.prompt ?? undefined,
-		wssUrl: config.configurable?.wssUrl ?? undefined,
-		cdpUrl: config.configurable?.cdpUrl ?? undefined,
-		browserProfile: config.configurable?.browserProfile ?? {
+		browserProfile: {
 			blockedDomains: BLOCKED_DOMAINS,
+			...config.configurable?.browserProfile,
+			userDataDir,
 		},
+		sessionId,
 	};
 }
 

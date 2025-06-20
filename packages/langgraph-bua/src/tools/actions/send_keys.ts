@@ -1,15 +1,14 @@
 import { z } from 'zod';
-import { DynamicStructuredAction, getBrowserInstance } from '../base';
+import { DynamicStructuredAction } from '../base';
 
 export const sendKeysAction = new DynamicStructuredAction({
 	name: 'send_keys',
-	description:
-		'Send strings of special keys like Escape,Backspace, Insert, PageDown, Delete, Enter, Shortcuts such as `Control+o`, `Control+Shift+T` are supported as well. This gets used in keyboard.press',
+	description: 'Send keys to the page',
 	schema: z.object({
-		keys: z.string().describe('Keys to send.'),
+		keys: z.string().describe('The keys to send to the page'),
 	}),
-	func: async (input) => {
-		const instance = getBrowserInstance();
+	func: async (input, _runManager, config) => {
+		const instance = await DynamicStructuredAction.getBrowserSession(config);
 		const page = await instance.getCurrentPage();
 		try {
 			await page.keyboard.press(input.keys);
@@ -29,7 +28,6 @@ export const sendKeysAction = new DynamicStructuredAction({
 			}
 		}
 		const msg = `⌨️  Sent keys: ${input.keys}`;
-		console.info(msg);
-		return msg;
+		return [{ type: 'text', text: msg }];
 	},
 });

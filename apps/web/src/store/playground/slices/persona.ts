@@ -1,6 +1,7 @@
 import { StateCreator } from 'zustand';
 import { personaService } from '@/services/persona.service';
 import type { PersonaSelect, PersonaInsert } from '@/database/client/schema';
+import type { PlaygroundStore } from '..';
 
 export interface PersonaSlice {
 	// State
@@ -23,12 +24,7 @@ export interface PersonaSlice {
 	setEditingPersona: (persona: PersonaSelect | null) => void;
 }
 
-export const createPersonaSlice: StateCreator<
-	PersonaSlice & { loadSimulations: () => Promise<void> },
-	[],
-	[],
-	PersonaSlice
-> = (set, get) => ({
+export const createPersonaSlice: StateCreator<PersonaSlice, [], [], PersonaSlice> = (set, get) => ({
 	// State
 	personas: [],
 	isPersonaLoading: false,
@@ -100,17 +96,19 @@ export const createPersonaSlice: StateCreator<
 	},
 
 	handlePinnedPersona: async (personaId) => {
-		const { loadSimulations } = get();
-
 		set((state) => ({
 			personas: state.personas.map((p) => ({
 				...p,
-				pinned: p.id === personaId ? !p.pinned : false,
+				pinned: p.id === personaId,
 			})),
 		}));
 
 		await personaService.togglePin(personaId);
-		await loadSimulations();
+
+		const store = get() as PlaygroundStore;
+		if (store.loadSimulationList) {
+			await store.loadSimulationList(true);
+		}
 	},
 
 	getPinnedPersona: () => {

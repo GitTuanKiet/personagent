@@ -21,12 +21,12 @@ class PersonaService {
 			throw new Error('Persona not found');
 		}
 		const updated = await clientDB.transaction(async (tx) => {
-			if (existing.pinned === false) {
-				await tx.update(personas).set({ pinned: false }).where(eq(personas.pinned, true));
-			}
+			// Always unpin all personas first
+			await tx.update(personas).set({ pinned: false }).where(eq(personas.pinned, true));
+			// Then pin the specified persona
 			const [updated] = await tx
 				.update(personas)
-				.set({ pinned: !existing.pinned })
+				.set({ pinned: true })
 				.where(eq(personas.id, id))
 				.returning();
 			return updated!;

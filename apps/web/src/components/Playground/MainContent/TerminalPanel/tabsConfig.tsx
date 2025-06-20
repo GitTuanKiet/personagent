@@ -1,32 +1,46 @@
-import { TerminalIcon, DatabaseIcon, BugIcon } from 'lucide-react';
+import { BugIcon, AlertTriangle, AlertCircle, Info } from 'lucide-react';
 import { TabConfig } from './types';
-import { ProblemsTab, getProblemsCount } from './tabs/ProblemsTab';
-import { ResultsTab, getResultsCount } from './tabs/ResultsTab';
-import { LogsTab, getLogsCount } from './tabs/LogsTab';
+import {
+	AllIssuesTab,
+	CriticalHighIssuesTab,
+	MediumIssuesTab,
+	LowIssuesTab,
+} from './tabs/UsabilityIssuesTab';
+
+// Counter functions - return 0 since we'll show counts in component headers
+const getTabCount = () => 0;
 
 export const tabs: readonly TabConfig[] = [
 	{
-		label: 'Problems',
+		label: 'All',
 		icon: BugIcon,
-		value: 'problems',
-		badge: 'destructive',
-		counter: getProblemsCount,
-		content: (state) => <ProblemsTab state={state} />,
-	},
-	{
-		label: 'Results',
-		icon: DatabaseIcon,
-		value: 'results',
-		badge: 'secondary',
-		counter: getResultsCount,
-		content: (state) => <ResultsTab state={state} />,
-	},
-	{
-		label: 'Logs',
-		icon: TerminalIcon,
-		value: 'logs',
+		value: 'all-issues',
 		badge: 'default',
-		counter: getLogsCount,
-		content: (state) => <LogsTab state={state} />,
+		counter: getTabCount,
+		content: (state) => <AllIssuesTab state={state} />,
+	},
+	{
+		label: 'Critical/High',
+		icon: AlertTriangle,
+		value: 'critical-high',
+		badge: 'destructive',
+		counter: getTabCount,
+		content: (state) => <CriticalHighIssuesTab state={state} />,
+	},
+	{
+		label: 'Medium',
+		icon: AlertCircle,
+		value: 'medium-issues',
+		badge: 'outline',
+		counter: getTabCount,
+		content: (state) => <MediumIssuesTab state={state} />,
+	},
+	{
+		label: 'Low',
+		icon: Info,
+		value: 'low-issues',
+		badge: 'secondary',
+		counter: getTabCount,
+		content: (state) => <LowIssuesTab state={state} />,
 	},
 ] as const;

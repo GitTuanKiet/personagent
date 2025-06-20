@@ -1,0 +1,25 @@
+{
+	"$schema": "https://json.schemastore.org/tsconfig",
+	"display": "Bun.js",
+	"extends": "./base.json",
+	"compilerOptions": {
+		"lib": ["esnext", "dom"],
+		"target": "esnext",
+		"module": "esnext",
+		"moduleResolution": "bundler",
+		"allowJs": true,
+		"allowImportingTsExtensions": true,
+		"verbatimModuleSyntax": true,
+		"strict": true,
+		"noEmit": true,
+		"noImplicitAny": true,
+		"noImplicitReturns": true,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
+		"useUnknownInCatchVariables": true,
+		"strictNullChecks": true,
+		"forceConsistentCasingInFileNames": true,
+		"preserveConstEnums": true,
+		"noFallthroughCasesInSwitch": true
+	}
+}

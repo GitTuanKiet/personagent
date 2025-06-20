@@ -77,6 +77,7 @@ export default function MainContent() {
 							direction="vertical"
 							onLayout={handleBottomPanelResize}
 							className="h-full pointer-events-none"
+							key={`bottom-${resizablePanelSize}`}
 						>
 							{/* Spacer panel - invisible area above terminal, allows ViewPanel interaction */}
 							<ResizablePanel
@@ -125,6 +126,7 @@ export default function MainContent() {
 				direction="horizontal"
 				onLayout={handleRightPanelResize}
 				className="flex-1"
+				key={`right-${resizablePanelSize}-${shouldShowTerminal}`}
 			>
 				{/* ViewPanel - Main content area with fixed positioning */}
 				<ResizablePanel

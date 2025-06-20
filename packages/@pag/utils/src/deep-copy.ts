@@ -22,8 +22,8 @@ export function deepCopy<T extends ((object | Date) & { toJSON?: () => string })
 	if (typeof source !== 'object' || source === null || typeof source === 'function') {
 		return source;
 	}
-	if (typeof (source as any).toJSON === 'function') {
-		return (source as any).toJSON() as T;
+	if (typeof source.toJSON === 'function') {
+		return source.toJSON() as T;
 	}
 	if (hash.has(source)) {
 		return hash.get(source);
@@ -40,6 +40,7 @@ export function deepCopy<T extends ((object | Date) & { toJSON?: () => string })
 	hash.set(source, clone);
 	for (const i in source) {
 		if (hasOwnProp(i)) {
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			clone[i] = deepCopy((source as any)[i], hash, path + `.${i}`);
 		}
 	}

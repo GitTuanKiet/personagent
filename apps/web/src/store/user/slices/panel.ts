@@ -27,10 +27,12 @@ export const createPanelSlice: StateCreator<PanelSlice, [], [], PanelSlice> = (s
 
 	setPanelSize: (size: number) => {
 		const currentPanels = get().panels;
+		const newSize = Math.round(Math.max(0, Math.min(size, 100)) * 100) / 100;
 		const newPanels = {
 			...currentPanels,
-			resizablePanelSize: Math.round(Math.max(0, Math.min(size, 100)) * 100) / 100,
+			resizablePanelSize: newSize,
 		}; // Round to 2 decimal places
+		console.log('setPanelSize:', { oldSize: currentPanels.resizablePanelSize, newSize, size });
 		set({ panels: newPanels });
 	},
 

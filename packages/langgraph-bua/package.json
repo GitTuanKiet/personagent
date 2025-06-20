@@ -28,30 +28,20 @@
     }
   },
   "dependencies": {
+    "pag-browser": "workspace:*",
     "@langchain/anthropic": "0.3.21",
     "@langchain/core": "^0.3.57",
     "@langchain/langgraph": "^0.3.1",
     "@langchain/openai": "0.5.12",
-    "lodash": "^4.17.21",
-    "minimatch": "^10.0.1",
-    "ps-list": "^8.1.1",
-    "reflect-metadata": "^0.2.2",
-    "turndown": "^7.2.0",
-    "typescript": "^5.8.3",
     "zod": "^3.25.64",
     "zod-to-json-schema": "^3.24.5"
   },
   "devDependencies": {
+    "@pag/eslint-config": "workspace:*",
+    "@pag/typescript-config": "workspace:*",
     "@types/bun": "*",
-    "@types/turndown": "^5.0.5",
-    "@types/lodash": "^4.17.17",
-    "biome": "^0.3.3",
-    "eslint": "^9.28.0",
     "rimraf": "^6.0.1",
-    "tsup": "^8.5.0"
-  },
-  "peerDependencies": {
-    "playwright": "^1.53.0",
-    "patchright": "^1.52.5"
+    "tsup": "^8.5.0",
+    "typescript": "^5.8.3"
   }
 }

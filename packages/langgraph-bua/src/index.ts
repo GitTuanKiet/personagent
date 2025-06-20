@@ -6,7 +6,7 @@ import { callModel } from './nodes/call-model.js';
 import { createBrowser } from './nodes/create-browser';
 import type { BUAState, BUAUpdate } from './types.js';
 import { BUAAnnotation, BUAConfigurable } from './types';
-import type { BrowserProfileOptions } from './browser/profile';
+import type { IBrowserProfile } from 'pag-browser';
 
 /**
  * Routes to the nodeBeforeAction node if a computer call is present
@@ -20,7 +20,7 @@ function takeActionOrEnd(state: BUAState): 'nodeBeforeAction' | 'createBrowser' 
 		return END;
 	}
 
-	if (!state.sessionId) {
+	if (!state.browserPid) {
 		return 'createBrowser';
 	}
 
@@ -35,10 +35,10 @@ function takeActionOrEnd(state: BUAState): 'nodeBeforeAction' | 'createBrowser' 
  * @returns {"callModel" | typeof END} The next node to execute.
  */
 function reinvokeModelOrEnd(state: BUAState): 'callModel' | typeof END {
-	if (state.results.length > 0) {
-		const lastResult = state.results[state.results.length - 1]!;
+	if (state.messages.length > 0) {
+		const lastMessage = state.messages[state.messages.length - 1]!;
 		// If the last message is a done action, end the thread.
-		if (lastResult.action === 'done') {
+		if (lastMessage.name === 'done') {
 			return END;
 		}
 
@@ -69,7 +69,7 @@ export interface CreateBuaParams<
 	 * The browser profile to use for the agent.
 	 * @default undefined
 	 */
-	browserProfile?: BrowserProfileOptions;
+	browserProfile?: IBrowserProfile;
 	/**
 	 * The prompt to use for the model. This will be expanded into a system message.
 	 * @default undefined
@@ -80,6 +80,10 @@ export interface CreateBuaParams<
 	 * @default false
 	 */
 	useVision?: boolean;
+	/**
+	 * The id of the browser session to use for this thread.
+	 */
+	sessionId?: string;
 	/**
 	 * A custom node to run before the computer action.
 	 * @default undefined
@@ -122,6 +126,7 @@ export function createBua<
 	nodeBeforeAction,
 	nodeAfterAction,
 	stateModifier,
+	sessionId,
 }: CreateBuaParams<StateModifier> = {}) {
 	const nodeBefore = nodeBeforeAction ?? (async () => {});
 	const nodeAfter = nodeAfterAction ?? (async () => {});
@@ -154,6 +159,7 @@ export function createBua<
 			browserProfile,
 			prompt,
 			useVision,
+			sessionId,
 		},
 		recursionLimit,
 	});
@@ -168,4 +174,5 @@ export {
 	BUAConfigurable,
 } from './types.js';
 export { getToolCalls, isBrowserCallToolMessage } from './utils.js';
-export * from './browser';
+export * from 'pag-browser';
+export type { BrowserTool } from './tools';

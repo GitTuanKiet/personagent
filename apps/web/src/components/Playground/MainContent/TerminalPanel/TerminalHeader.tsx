@@ -2,7 +2,15 @@ import React, { memo } from 'react';
 import { Button } from '@workspace/ui/components/button';
 import { Badge } from '@workspace/ui/components/badge';
 import { TabsList, TabsTrigger } from '@workspace/ui/components/tabs';
-import { ChevronUpIcon, ChevronLeftIcon, XIcon, PanelBottomIcon, SidebarIcon } from 'lucide-react';
+import {
+	ChevronUpIcon,
+	ChevronDownIcon,
+	ChevronLeftIcon,
+	ChevronRightIcon,
+	XIcon,
+	PanelBottomIcon,
+	SidebarIcon,
+} from 'lucide-react';
 import { TerminalState } from './types';
 import { tabs } from './tabsConfig';
 import { useTerminalControls } from './hooks/useTerminalControls';
@@ -27,9 +35,23 @@ export const TerminalHeader: React.FC<TerminalHeaderProps> = memo(({ state }) =>
 		return isRight ? <PanelBottomIcon size={8} /> : <SidebarIcon size={12} />;
 	};
 
-	// Helper to get maximize icon
+	// Helper to get maximize icon based on current state
 	const getMaximizeIcon = () => {
-		return isRight ? <ChevronLeftIcon size={8} /> : <ChevronUpIcon size={12} />;
+		if (isRight) {
+			// Right position: ChevronLeft = maximize, ChevronRight = restore
+			return maximizeState.isMaximized ? (
+				<ChevronRightIcon size={8} />
+			) : (
+				<ChevronLeftIcon size={8} />
+			);
+		} else {
+			// Bottom position: ChevronUp = maximize, ChevronDown = restore
+			return maximizeState.isMaximized ? (
+				<ChevronDownIcon size={12} />
+			) : (
+				<ChevronUpIcon size={12} />
+			);
+		}
 	};
 
 	// Right position: Vertical layout (Header as sidebar)

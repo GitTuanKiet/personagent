@@ -8,6 +8,7 @@ export const DEFAULT_PERSONA_DATA: PersonaFormData = {
 	behaviorTraits: [],
 	preferences: {},
 	pinned: false,
+	language: 'vietnamese',
 };
 
 export const AGE_GROUPS: { value: AgeGroup; label: string }[] = [
@@ -50,6 +51,7 @@ export const SAMPLE_PERSONAS: PersonaFormData[] = [
 			language: 'en',
 		},
 		pinned: false,
+		language: 'english',
 	},
 	{
 		name: 'Cautious Senior User',
@@ -64,6 +66,7 @@ export const SAMPLE_PERSONAS: PersonaFormData[] = [
 			confirmations: 'enabled',
 		},
 		pinned: false,
+		language: 'english',
 	},
 	{
 		name: 'Mobile-First Teen',
@@ -79,6 +82,7 @@ export const SAMPLE_PERSONAS: PersonaFormData[] = [
 			notifications: 'frequent',
 		},
 		pinned: false,
+		language: 'english',
 	},
 	{
 		name: 'Busy Parent',
@@ -93,5 +97,6 @@ export const SAMPLE_PERSONAS: PersonaFormData[] = [
 			simplicity: 'valued',
 		},
 		pinned: false,
+		language: 'english',
 	},
 ];

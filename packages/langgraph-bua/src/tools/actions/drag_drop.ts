@@ -1,11 +1,10 @@
 import { z } from 'zod';
-import { DynamicStructuredAction, getBrowserInstance } from '../base';
-import type { ElementHandle, Page } from 'playwright';
+import { DynamicStructuredAction } from '../base';
+import type { ElementHandle, Page } from 'patchright';
 
 export const dragDropAction = new DynamicStructuredAction({
 	name: 'drag_drop',
-	description:
-		'Drag and drop elements or between coordinates on the page - useful for canvas drawing, sortable lists, sliders, file uploads, and UI rearrangement',
+	description: 'Drag and drop an element',
 	schema: z.object({
 		element_source: z
 			.string()
@@ -74,87 +73,10 @@ export const dragDropAction = new DynamicStructuredAction({
 			.optional()
 			.describe('Delay in milliseconds between steps (0 for fastest, 10-20 for more natural)'),
 	}),
-	func: async (input) => {
-		const instance = getBrowserInstance();
-		const page: Page = await instance.getCurrentPage();
-		async function getDragElements(page: Page, sourceSelector: string, targetSelector: string) {
-			let sourceElement: ElementHandle | null = null;
-			let targetElement: ElementHandle | null = null;
-			try {
-				const sourceLocator = page.locator(sourceSelector);
-				const targetLocator = page.locator(targetSelector);
-				if ((await sourceLocator.count()) > 0) {
-					sourceElement = await sourceLocator.first().elementHandle();
-				}
-				if ((await targetLocator.count()) > 0) {
-					targetElement = await targetLocator.first().elementHandle();
-				}
-			} catch (e) {}
-			return [sourceElement, targetElement];
-		}
-		async function getElementCoordinates(
-			sourceElement: ElementHandle,
-			targetElement: ElementHandle,
-			sourcePosition?: { x: number; y: number } | null,
-			targetPosition?: { x: number; y: number } | null,
-		) {
-			let sourceCoords: [number, number] | null = null;
-			let targetCoords: [number, number] | null = null;
-			try {
-				if (sourcePosition) {
-					sourceCoords = [sourcePosition.x, sourcePosition.y];
-				} else {
-					const sourceBox = await sourceElement.boundingBox();
-					if (sourceBox) {
-						sourceCoords = [
-							Math.round(sourceBox.x + sourceBox.width / 2),
-							Math.round(sourceBox.y + sourceBox.height / 2),
-						];
-					}
-				}
-				if (targetPosition) {
-					targetCoords = [targetPosition.x, targetPosition.y];
-				} else {
-					const targetBox = await targetElement.boundingBox();
-					if (targetBox) {
-						targetCoords = [
-							Math.round(targetBox.x + targetBox.width / 2),
-							Math.round(targetBox.y + targetBox.height / 2),
-						];
-					}
-				}
-			} catch (e) {}
-			return [sourceCoords, targetCoords];
-		}
-		async function executeDragOperation(
-			page: Page,
-			sourceX: number,
-			sourceY: number,
-			targetX: number,
-			targetY: number,
-			steps: number,
-			delayMs: number,
-		): Promise<[boolean, string]> {
-			try {
-				await page.mouse.move(sourceX, sourceY);
-				await page.mouse.down();
-				for (let i = 1; i <= steps; i++) {
-					const ratio = i / steps;
-					const intermediateX = Math.round(sourceX + (targetX - sourceX) * ratio);
-					const intermediateY = Math.round(sourceY + (targetY - sourceY) * ratio);
-					await page.mouse.move(intermediateX, intermediateY);
-					if (delayMs > 0) {
-						await new Promise((res) => setTimeout(res, delayMs));
-					}
-				}
-				await page.mouse.move(targetX, targetY);
-				await page.mouse.move(targetX, targetY);
-				await page.mouse.up();
-				return [true, 'Drag operation completed successfully'];
-			} catch (e) {
-				return [false, `Error during drag operation: ${String(e)}`];
-			}
-		}
+	func: async (input, _runManager, config) => {
+		const instance = await DynamicStructuredAction.getBrowserSession(config);
+		const page = await instance.getCurrentPage();
+
 		try {
 			let sourceX = null,
 				sourceY = null,
@@ -169,7 +91,8 @@ export const dragDropAction = new DynamicStructuredAction({
 					input.element_target,
 				);
 				if (!sourceElement || !targetElement) {
-					return `Failed to find ${!sourceElement ? 'source' : 'target'} element`;
+					const msg = `🖱️ Failed to find ${!sourceElement ? 'source' : 'target'} element`;
+					return [{ type: 'text', text: msg }];
 				}
 				const [sourceCoords, targetCoords] = await getElementCoordinates(
 					sourceElement,
@@ -178,7 +101,8 @@ export const dragDropAction = new DynamicStructuredAction({
 					input.element_target_offset,
 				);
 				if (!sourceCoords || !targetCoords) {
-					return `Failed to determine ${!sourceCoords ? 'source' : 'target'} coordinates`;
+					const msg = `🖱️ Failed to determine ${!sourceCoords ? 'source' : 'target'} coordinates`;
+					return [{ type: 'text', text: msg }];
 				}
 				[sourceX, sourceY] = sourceCoords;
 				[targetX, targetY] = targetCoords;
@@ -195,12 +119,14 @@ export const dragDropAction = new DynamicStructuredAction({
 				targetX = input.coord_target_x;
 				targetY = input.coord_target_y;
 			} else {
-				return 'Must provide either source/target selectors or source/target coordinates';
+				const msg = `🖱️ Must provide either element selectors or coordinates for both source and target`;
+				return [{ type: 'text', text: msg }];
 			}
 			if (
 				[sourceX, sourceY, targetX, targetY].some((coord) => coord === null || coord === undefined)
 			) {
-				return 'Failed to determine source or target coordinates';
+				const msg = '🖱️ Failed to determine source or target coordinates';
+				return [{ type: 'text', text: msg }];
 			}
 			const [success, message] = await executeDragOperation(
 				page,
@@ -212,7 +138,7 @@ export const dragDropAction = new DynamicStructuredAction({
 				delayMs,
 			);
 			if (!success) {
-				return message;
+				throw new Error(message);
 			}
 			let msg;
 			if (input.element_source && input.element_target) {
@@ -220,10 +146,89 @@ export const dragDropAction = new DynamicStructuredAction({
 			} else {
 				msg = `🖱️ Dragged from (${sourceX}, ${sourceY}) to (${targetX}, ${targetY})`;
 			}
-			return msg;
+			return [{ type: 'text', text: msg }];
 		} catch (e) {
-			const errorMsg = `Failed to perform drag and drop: ${String(e)}`;
-			return errorMsg;
+			const errorMsg = `🖱️ Failed to perform drag and drop: ${e instanceof Error ? e.message : String(e)}`;
+			throw new Error(errorMsg);
 		}
 	},
 });
+
+async function getDragElements(page: Page, sourceSelector: string, targetSelector: string) {
+	let sourceElement: ElementHandle | null = null;
+	let targetElement: ElementHandle | null = null;
+	try {
+		const sourceLocator = page.locator(sourceSelector);
+		const targetLocator = page.locator(targetSelector);
+		if ((await sourceLocator.count()) > 0) {
+			sourceElement = await sourceLocator.first().elementHandle();
+		}
+		if ((await targetLocator.count()) > 0) {
+			targetElement = await targetLocator.first().elementHandle();
+		}
+	} catch (e) {}
+	return [sourceElement, targetElement];
+}
+async function getElementCoordinates(
+	sourceElement: ElementHandle,
+	targetElement: ElementHandle,
+	sourcePosition?: { x: number; y: number } | null,
+	targetPosition?: { x: number; y: number } | null,
+) {
+	let sourceCoords: [number, number] | null = null;
+	let targetCoords: [number, number] | null = null;
+	try {
+		if (sourcePosition) {
+			sourceCoords = [sourcePosition.x, sourcePosition.y];
+		} else {
+			const sourceBox = await sourceElement.boundingBox();
+			if (sourceBox) {
+				sourceCoords = [
+					Math.round(sourceBox.x + sourceBox.width / 2),
+					Math.round(sourceBox.y + sourceBox.height / 2),
+				];
+			}
+		}
+		if (targetPosition) {
+			targetCoords = [targetPosition.x, targetPosition.y];
+		} else {
+			const targetBox = await targetElement.boundingBox();
+			if (targetBox) {
+				targetCoords = [
+					Math.round(targetBox.x + targetBox.width / 2),
+					Math.round(targetBox.y + targetBox.height / 2),
+				];
+			}
+		}
+	} catch (e) {}
+	return [sourceCoords, targetCoords];
+}
+async function executeDragOperation(
+	page: Page,
+	sourceX: number,
+	sourceY: number,
+	targetX: number,
+	targetY: number,
+	steps: number,
+	delayMs: number,
+): Promise<[boolean, string]> {
+	try {
+		await page.mouse.move(sourceX, sourceY);
+		await page.mouse.down();
+		for (let i = 1; i <= steps; i++) {
+			const ratio = i / steps;
+			const intermediateX = Math.round(sourceX + (targetX - sourceX) * ratio);
+			const intermediateY = Math.round(sourceY + (targetY - sourceY) * ratio);
+			await page.mouse.move(intermediateX, intermediateY);
+			if (delayMs > 0) {
+				await new Promise((res) => setTimeout(res, delayMs));
+			}
+		}
+		await page.mouse.move(targetX, targetY);
+		await page.mouse.move(targetX, targetY);
+		await page.mouse.up();
+		return [true, 'Drag operation completed successfully'];
+	} catch (e) {
+		return [false, `Error during drag operation: ${String(e)}`];
+	}
+}

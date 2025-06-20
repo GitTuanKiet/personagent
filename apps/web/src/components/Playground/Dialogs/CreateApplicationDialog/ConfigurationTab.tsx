@@ -101,36 +101,6 @@ export function ConfigurationTab() {
 					</FormItem>
 				)}
 			/>
-
-			<FormField
-				control={form.control}
-				name="wssUrl"
-				render={({ field }) => (
-					<FormItem>
-						<FormLabel>WebSocket URL</FormLabel>
-						<FormControl>
-							<Input placeholder="wss://example.com/ws" {...field} />
-						</FormControl>
-						<FormDescription>Optional WebSocket URL for real-time communication</FormDescription>
-						<FormMessage />
-					</FormItem>
-				)}
-			/>
-
-			<FormField
-				control={form.control}
-				name="cdpUrl"
-				render={({ field }) => (
-					<FormItem>
-						<FormLabel>CDP URL</FormLabel>
-						<FormControl>
-							<Input placeholder="http://localhost:9222" {...field} />
-						</FormControl>
-						<FormDescription>Chrome DevTools Protocol URL for advanced debugging</FormDescription>
-						<FormMessage />
-					</FormItem>
-				)}
-			/>
 		</div>
 	);
 }

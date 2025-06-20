@@ -8,8 +8,7 @@ import { TerminalContent } from './TerminalContent';
 
 export default function TerminalPanel() {
 	// Get data from stores
-	const { getPinnedSimulation } = usePlaygroundStore();
-	const currentSimulation = getPinnedSimulation();
+	const currentSimulation = usePlaygroundStore((state) => state.currentSimulation);
 
 	// Get UI state from user store
 	const { terminalPanelCollapsed, terminalPosition } = useUserStore((state) => state.ui);

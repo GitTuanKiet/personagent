@@ -1,5 +1,5 @@
-import { PlaygroundPage } from '@/components/Playground';
+import { redirect } from 'next/navigation';
 
 export default function Page() {
-	return <PlaygroundPage />;
+	redirect('/playground/new');
 }

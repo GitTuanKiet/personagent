@@ -57,6 +57,11 @@ export function PersonaProfile() {
 							{persona.digitalSkillLevel === 'high' && 'Tech-Savvy'}
 						</Badge>
 					)}
+					{persona.language && (
+						<Badge variant="outline" className="text-xs">
+							{persona.language}
+						</Badge>
+					)}
 				</div>
 			</div>
 		);

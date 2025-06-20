@@ -92,8 +92,7 @@ export default function FlowPanel() {
 	const [expandedSteps, setExpandedSteps] = useState<Set<number>>(new Set([1]));
 
 	// Get current simulation from store
-	const { getPinnedSimulation } = usePlaygroundStore();
-	const currentSimulation = getPinnedSimulation();
+	const currentSimulation = usePlaygroundStore((state) => state.currentSimulation);
 
 	// Extract scripts from simulation state
 	const scripts: Record<number, BrowserToolCall[]> = currentSimulation?.state?.scripts || {};

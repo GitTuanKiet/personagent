@@ -1,6 +1,7 @@
 import { StateCreator } from 'zustand';
 import { applicationService } from '@/services/application.service';
 import type { ApplicationSelect, ApplicationInsert } from '@/database/client/schema';
+import type { PlaygroundStore } from '..';
 
 export interface ApplicationSlice {
 	// State
@@ -20,12 +21,10 @@ export interface ApplicationSlice {
 	setEditingApplication: (application: ApplicationSelect | null) => void;
 }
 
-export const createApplicationSlice: StateCreator<
-	ApplicationSlice & { loadSimulations: () => Promise<void> },
-	[],
-	[],
-	ApplicationSlice
-> = (set, get) => ({
+export const createApplicationSlice: StateCreator<ApplicationSlice, [], [], ApplicationSlice> = (
+	set,
+	get,
+) => ({
 	// State
 	applications: [],
 	isApplicationLoading: false,
@@ -62,17 +61,19 @@ export const createApplicationSlice: StateCreator<
 	},
 
 	handlePinnedApplication: async (applicationId) => {
-		const { loadSimulations } = get();
-
 		set((state) => ({
 			applications: state.applications.map((a) => ({
 				...a,
-				pinned: a.id === applicationId ? !a.pinned : false,
+				pinned: a.id === applicationId,
 			})),
 		}));
 
 		await applicationService.togglePin(applicationId);
-		await loadSimulations();
+
+		const store = get() as PlaygroundStore;
+		if (store.loadSimulationList) {
+			await store.loadSimulationList(true);
+		}
 	},
 
 	getPinnedApplication: () => {

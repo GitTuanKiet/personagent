@@ -10,8 +10,11 @@ export const doneAction = new DynamicStructuredAction({
 		ok: z.boolean(),
 	}),
 	func: async (input) => {
-		const msg = input.ok ? `✅  ${input.text}` : `❌  ${input.text}`;
+		if (!input.ok) {
+			throw new Error(input.text);
+		}
+		const msg = `✅  ${input.text}`;
 		console.info(msg);
-		return msg;
+		return [{ type: 'text', text: msg }];
 	},
 });

@@ -1,5 +1,5 @@
 {
-	"id": "8ba4dcad-cb4f-4d13-9fe1-1abc17c7fed3",
+	"id": "0649c444-5eef-4a8d-a9e5-6cd39e6e45fb",
 	"prevId": "00000000-0000-0000-0000-000000000000",
 	"version": "7",
 	"dialect": "postgresql",
@@ -56,18 +56,6 @@
 					"type": "text[]",
 					"primaryKey": false,
 					"notNull": true
-				},
-				"wssUrl": {
-					"name": "wssUrl",
-					"type": "text",
-					"primaryKey": false,
-					"notNull": false
-				},
-				"cdpUrl": {
-					"name": "cdpUrl",
-					"type": "text",
-					"primaryKey": false,
-					"notNull": false
 				},
 				"recursionLimit": {
 					"name": "recursionLimit",
@@ -170,6 +158,13 @@
 					"type": "jsonb",
 					"primaryKey": false,
 					"notNull": false
+				},
+				"language": {
+					"name": "language",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true,
+					"default": "'vietnamese'"
 				},
 				"pinned": {
 					"name": "pinned",

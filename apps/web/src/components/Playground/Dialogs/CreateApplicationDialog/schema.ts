@@ -43,26 +43,6 @@ export const applicationFormSchema = z.object({
 
 	env: z.record(z.string(), z.union([z.string(), z.number(), z.boolean()])),
 
-	wssUrl: z.string().refine((url) => {
-		if (!url || url === '') return true;
-		try {
-			const parsedUrl = new URL(url);
-			return parsedUrl.protocol === 'ws:' || parsedUrl.protocol === 'wss:';
-		} catch {
-			return false;
-		}
-	}, 'Invalid WebSocket URL format'),
-
-	cdpUrl: z.string().refine((url) => {
-		if (!url || url === '') return true;
-		try {
-			new URL(url);
-			return true;
-		} catch {
-			return false;
-		}
-	}, 'Invalid CDP URL format'),
-
 	pinned: z.boolean(),
 });
 

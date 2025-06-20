@@ -1,12 +1,12 @@
-import { HumanMessage, SystemMessage } from '@langchain/core/messages';
+import { AIMessage, HumanMessage, SystemMessage } from '@langchain/core/messages';
 import type { LangGraphRunnableConfig } from '@langchain/langgraph';
 import { ChatOpenAI } from '@langchain/openai';
-import type { BrowserToolCallResult, BUAState, BUAUpdate } from '../types';
+import type { BUAState, BUAUpdate } from '../types';
 import { getConfigurationWithDefaults } from '../types';
 import { getAvailableActions } from '../tools';
 import { SYSTEM_PROMPT_TEMPLATE } from '../prompt';
 import { getToolCalls, type BrowserToolCall } from '../utils';
-import { BrowserAction, browserContainer } from '../browser';
+import { BrowserManager, browserContainer } from 'pag-browser';
 import { RunnableLambda } from '@langchain/core/runnables';
 
 const _sysMessageToPrompt = (sysMessage: string | SystemMessage | undefined) => {
@@ -16,37 +16,30 @@ const _sysMessageToPrompt = (sysMessage: string | SystemMessage | undefined) => 
 	return sysMessage?.content;
 };
 
-async function pruneResults(results: BrowserToolCallResult[]): Promise<BrowserToolCallResult[]> {
-	const prunedResults: BrowserToolCallResult[] = [];
+async function pruneMessages(messages: AIMessage[]): Promise<AIMessage[]> {
+	const prunedMessages: AIMessage[] = [];
 	// let foundFirstGetAxTree = false;
 	let foundFirstExtractContent = false;
 
-	for (let i = results.length - 1; i >= 0; i--) {
-		const result = results[i]!;
+	for (let i = messages.length - 1; i >= 0; i--) {
+		const message = messages[i]!;
 
-		// if (result.action === "get_ax_tree") {
-		//     if (!foundFirstGetAxTree) {
-		//         prunedResults.push(result);
-		//         foundFirstGetAxTree = true;
-		//         continue;
-		//     }
-		// } else
-		if (result.action === 'extract_content') {
+		if (message.name === 'get_content') {
 			if (!foundFirstExtractContent) {
-				prunedResults.push(result);
+				prunedMessages.push(message);
 				foundFirstExtractContent = true;
 				continue;
 			}
 		}
 
-		prunedResults.push(result);
+		prunedMessages.push(message);
 	}
 
-	return prunedResults.reverse();
+	return prunedMessages.reverse();
 }
 
-const pruneResultsRunnable = RunnableLambda.from(pruneResults).withConfig({
-	runName: 'prune-results',
+const pruneMessagesRunnable = RunnableLambda.from(pruneMessages).withConfig({
+	runName: 'prune-messages',
 });
 
 /**
@@ -60,17 +53,18 @@ export async function callModel(
 	state: BUAState,
 	config: LangGraphRunnableConfig,
 ): Promise<BUAUpdate> {
-	let browserAction: BrowserAction | null = null;
-
 	const configuration = getConfigurationWithDefaults(config);
-	const { sessionId, messages, actions: performedActions, results, nSteps } = state;
+	const { messages, actions: performedActions, nSteps } = state;
 	let currentState;
 
-	const excludeActions: string[] = results.length > 0 ? [results[results.length - 1]!.action] : [];
+	const session = await browserContainer.get(BrowserManager).getOrCreateSession({
+		sessionId: configuration.sessionId,
+		browserProfile: configuration.browserProfile,
+	});
 
-	if (sessionId) {
-		browserAction = browserContainer.get(BrowserAction);
-		const browserStateSummary = await browserAction.getStateSummary(true);
+	const excludeActions: string[] = [];
+	if (session) {
+		const browserStateSummary = await session.getStateSummary(true);
 		let elementTreeText = browserStateSummary.elementTree.clickableElementsToString(
 			configuration.includeAttributes,
 		);
@@ -118,40 +112,40 @@ ${elementTreeText}`;
 		currentState = `No state`;
 	}
 
-	const history = (await pruneResultsRunnable.invoke(results))
-		.map((result) => `${result.action}: ${result.result}`)
-		.join('\n');
-
 	const systemPrompt = await SYSTEM_PROMPT_TEMPLATE.format({
-		thinking_rule: excludeActions.includes('thinking')
-			? ''
-			: `### Reflective behavior and troubleshooting
-- If you repeat the same action more than once and it does not change the page or result, STOP and use the \`thinking\` tool.
-- Before retrying any action (like scroll or click), ask yourself: *Did this work last time? What could be wrong?*
-- Use \`thinking\` to reason through uncertainty, unexpected page behavior, or ambiguous content.`,
 		current_state: currentState,
-		performed_actions: history,
 		prompt: _sysMessageToPrompt(configuration.prompt),
 	});
 
 	const modelWithTools = new ChatOpenAI({
 		model: configuration.model,
 		temperature: 0,
-	}).bindTools(getAvailableActions(await browserAction?.getCurrentPage(), excludeActions), {
+	}).bindTools(getAvailableActions(await session.getCurrentPage(), excludeActions), {
 		parallel_tool_calls: true,
 	});
 
-	const response = await modelWithTools.invoke([new SystemMessage(systemPrompt), ...messages]);
+	const response = await modelWithTools.invoke([
+		new SystemMessage(systemPrompt),
+		...(await pruneMessagesRunnable.invoke(messages)),
+	]);
 	const browserToolCalls = (getToolCalls(response) ?? []) as BrowserToolCall[];
 
-	return {
-		...(browserToolCalls.length > 0
-			? {
-					actions: browserToolCalls,
-				}
-			: {
-					messages: response,
-				}),
+	const result: BUAUpdate = {
+		actions: browserToolCalls,
+		messages: response,
 		scripts: { [nSteps]: performedActions },
 	};
+
+	if (performedActions.length > 0) {
+		const lastAiMessage: AIMessage | undefined = messages.findLast(
+			(message) => message.getType() === 'ai',
+		);
+		if (lastAiMessage) {
+			lastAiMessage.tool_calls = performedActions;
+		}
+
+		result.messages = lastAiMessage ? [lastAiMessage, response] : response;
+	}
+
+	return result;
 }
