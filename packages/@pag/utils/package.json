@@ -28,9 +28,6 @@
     "format:check": "biome ci . && prettier --check . --ignore-path ../../../.prettierignore"
   },
   "devDependencies": {
-    "@pag/eslint-config": "workspace:*",
-    "@pag/typescript-config": "workspace:*",
-    "@pag/vitest-config": "workspace:*",
     "@happy-dom/global-registrator": "^18.0.1",
     "typescript": "^5.8.3",
     "vite": "^6.3.5",

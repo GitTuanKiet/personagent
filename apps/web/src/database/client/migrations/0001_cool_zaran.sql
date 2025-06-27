@@ -1,1 +1,0 @@
-ALTER TABLE "simulations" DROP COLUMN "pinned";

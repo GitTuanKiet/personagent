@@ -1,0 +1,21 @@
+{
+	"extends": "@pag/typescript-config/base.json",
+	"compilerOptions": {
+		"noImplicitReturns": true,
+		"noFallthroughCasesInSwitch": true,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
+		"useDefineForClassFields": true,
+		"strictPropertyInitialization": false,
+		"allowJs": true,
+		"strict": true,
+		"strictFunctionTypes": false,
+		"outDir": "dist",
+		"types": ["node"],
+		"resolveJsonModule": true,
+		"emitDecoratorMetadata": true,
+		"experimentalDecorators": true
+	},
+	"include": ["**/*.ts", "**/*.js"],
+	"exclude": ["node_modules", "dist"]
+}

@@ -20,13 +20,26 @@
         "^lint"
       ]
     },
+    "lintfix": {
+      "dependsOn": [
+        "^lintfix"
+      ]
+    },
     "check-types": {
       "dependsOn": [
         "^check-types"
       ]
     },
-    "format": {},
-    "format:check": {},
+    "format": {
+      "dependsOn": [
+        "^format"
+      ]
+    },
+    "format:check": {
+      "dependsOn": [
+        "^format:check"
+      ]
+    },
     "dev": {
       "cache": false,
       "persistent": true

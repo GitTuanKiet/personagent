@@ -1,0 +1,43 @@
+{
+  "name": "agent",
+  "version": "0.0.1",
+  "author": "GitTuanKiet",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build:bua": "bun build --entrypoints src/bua/graph.ts --outdir dist/bua --target node --env disable --packages external && chmod 755 dist/bua/graph.js",
+    "clean": "rm -rf ./dist .turbo || true",
+    "format": "prettier --config .prettierrc --write \"src\" \"scripts\"",
+    "format:check": "prettier --config .prettierrc --check \"src\" \"scripts\"",
+    "lint": "eslint src",
+    "lintfix": "eslint src --fix",
+    "dev": "langgraphjs dev --config langgraph.dev.json",
+    "dockerfile": "langgraphjs dockerfile Dockerfile --config langgraph.json"
+  },
+  "dependencies": {
+    "@langchain/anthropic": "^0.3.21",
+    "@langchain/community": "^0.3.45",
+    "@langchain/core": "^0.3.61",
+    "@langchain/langgraph": "^0.3.0",
+    "@langchain/openai": "^0.5.15",
+    "langchain": "^0.3.27",
+    "lodash": "^4.17.21",
+    "minimatch": "^10.0.3",
+    "patchright": "^1.52.5",
+    "ps-list": "^8.1.1",
+    "reflect-metadata": "^0.2.2",
+    "turndown": "^7.2.0",
+    "ws": "^8.18.2",
+    "zod": "^3.25.67"
+  },
+  "devDependencies": {
+    "@langchain/langgraph-cli": "^0.0.40",
+    "@types/lodash": "^4.17.17",
+    "@types/node": "*",
+    "@types/turndown": "^5.0.5",
+    "@types/ws": "^8.18.1",
+    "dotenv": "^16.4.5",
+    "prettier": "^3.5.3",
+    "typescript": "^5.8.3"
+  }
+}

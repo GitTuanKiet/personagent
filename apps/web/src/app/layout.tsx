@@ -1,16 +1,20 @@
 import { Geist, Geist_Mono } from 'next/font/google';
 
 import '@workspace/ui/globals.css';
-import '@/styles/user-preferences.css';
 
-import { ThemeProviders } from '@/providers/theme-providers';
-import { TRPCProvider } from '@/providers/trpc-provider';
+import { ThemeProviders } from '@/providers/theme';
 import { Toaster } from '@workspace/ui/components/sonner';
+import { QueryClientProvider } from '@/providers/query-client';
+import { NuqsAdapter } from 'nuqs/adapters/next/app';
+import { createMetadata } from '@/lib/metadata';
 
-export const metadata = {
-	title: 'AI-Powered UX Evaluation Platform',
+export const metadata = createMetadata({
+	title: {
+		template: '%s | Pag',
+		default: 'Pag',
+	},
 	description: 'Automated user experience evaluation using AI agents',
-};
+});
 
 const fontSans = Geist({
 	subsets: ['latin'],
@@ -26,12 +30,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 	return (
 		<html lang="en" suppressHydrationWarning>
 			<body className={`${fontSans.variable} ${fontMono.variable} font-sans antialiased `}>
-				<TRPCProvider>
+				<NuqsAdapter>
 					<ThemeProviders>
-						{children}
-						<Toaster />
+						<QueryClientProvider>{children}</QueryClientProvider>
+						<Toaster richColors closeButton />
 					</ThemeProviders>
-				</TRPCProvider>
+				</NuqsAdapter>
 			</body>
 		</html>
 	);

@@ -1,16 +1,14 @@
 import { defineConfig } from 'drizzle-kit';
 
-const isClient = process.env.IN_CLIENT === 'true';
-const url = isClient ? process.env.DATABASE_URL : process.env.SERVER_DATABASE_URL;
+const url = process.env.DATABASE_URI;
 if (!url) {
-	throw new Error(`In ${isClient ? 'client' : 'server'} mode, missing database URL`);
+	throw new Error(`Missing database URL, 'DATABASE_URI' is not set correctly`);
 }
 
 export default defineConfig({
-	schema: isClient ? './src/database/client/schema.ts' : './src/database/server/schema.ts',
-	out: isClient ? './src/database/client/migrations' : './src/database/server/migrations',
+	schema: './src/database/schema',
+	out: './src/database/migrations',
 	dialect: 'postgresql',
-	...(isClient ? { driver: 'pglite' } : {}),
 	dbCredentials: {
 		url,
 	},

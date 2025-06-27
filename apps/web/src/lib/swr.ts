@@ -1,9 +1,13 @@
-import useSWR, { SWRHook } from 'swr';
+import useSWR, { SWRHook, SWRConfiguration, Key, Fetcher } from 'swr';
 
-// @ts-ignore
-export const useClientDataSWR: SWRHook = (key, fetch, config) =>
-	useSWR(key, fetch, {
-		// default is 2000ms ,it makes the user's quick switch don't work correctly.
+// Optimized SWR hook for client-side data with minimal revalidation intervals
+export const useClientDataSWR = <Data = any, Error = any>(
+	key: Key,
+	fetcher: Fetcher<Data> | null,
+	config?: SWRConfiguration<Data, Error>,
+) =>
+	useSWR(key, fetcher, {
+		// default is 2000ms, it makes the user's quick switch don't work correctly.
 		// Cause issue like this: https://github.com/lobehub/lobe-chat/issues/532
 		// we need to set it to 0.
 		dedupingInterval: 0,
@@ -14,18 +18,26 @@ export const useClientDataSWR: SWRHook = (key, fetch, config) =>
 		...config,
 	});
 
-// @ts-ignore
-export const useOnlyFetchOnceSWR: SWRHook = (key, fetch, config) =>
-	useSWR(key, fetch, {
+// SWR hook that fetches data only once and doesn't revalidate
+export const useOnlyFetchOnceSWR = <Data = any, Error = any>(
+	key: Key,
+	fetcher: Fetcher<Data> | null,
+	config?: SWRConfiguration<Data, Error>,
+) =>
+	useSWR(key, fetcher, {
 		refreshWhenOffline: false,
 		revalidateOnFocus: false,
 		revalidateOnReconnect: false,
 		...config,
 	});
 
-// @ts-ignore
-export const useActionSWR: SWRHook = (key, fetch, config) =>
-	useSWR(key, fetch, {
+// SWR hook for actions that should not auto-revalidate
+export const useActionSWR = <Data = any, Error = any>(
+	key: Key,
+	fetcher: Fetcher<Data> | null,
+	config?: SWRConfiguration<Data, Error>,
+) =>
+	useSWR(key, fetcher, {
 		refreshWhenHidden: false,
 		refreshWhenOffline: false,
 		revalidateOnFocus: false,

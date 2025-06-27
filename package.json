@@ -12,12 +12,12 @@
     "lint": "turbo run lint",
     "lintfix": "turbo run lintfix",
     "check-types": "turbo run check-types",
+    "syncpack-lint": "bunx syncpack@alpha lint",
     "syncpack-fix": "bunx syncpack@alpha fix",
     "syncpack-update": "bunx syncpack@alpha update"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
-    "@pag/eslint-config": "workspace:*",
     "@swc/core": "^1.12.0",
     "@types/node": "*",
     "lefthook": "^1.11.13",
@@ -27,14 +27,13 @@
     "turbo": "^2.5.4",
     "typescript": "^5.8.3"
   },
-  "engines": {
-    "node": ">=22.15.1",
-    "bun": ">=1.2.15"
-  },
-  "packageManager": "bun@1.2.16",
+  "packageManager": "bun@1.2.17",
   "workspaces": [
     "apps/*",
     "packages/*",
     "packages/@pag/*"
-  ]
+  ],
+  "resolutions": {
+    "@langchain/core": "^0.3.61"
+  }
 }

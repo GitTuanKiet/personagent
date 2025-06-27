@@ -1,4 +1,4 @@
-import { wyhash } from '@/lib/wyhash';
+import { wyhash } from '@pag/utils';
 import { readFile, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
@@ -24,7 +24,7 @@ type Migration = {
 export async function generateClientMigrations(): Promise<Migration[]> {
 	let journal: Journal;
 	try {
-		journal = (await import('../src/database/client/migrations/meta/_journal.json'))
+		journal = (await import('../../../coverage/__dep/client/migrations/meta/_journal.json'))
 			.default as Journal;
 	} catch (error) {
 		throw new Error(`Migration file not found. Please run \`pnpm run db:generate\`.`);

@@ -1,0 +1,69 @@
+volumes:
+  pg-data:
+    driver: local
+
+services:
+  redis:
+    image: redis:8.2-m01-alpine
+    container_name: redis
+    ports:
+      - "6380:6379"
+    healthcheck:
+      test: redis-cli ping
+      interval: 5s
+      timeout: 1s
+      retries: 5
+
+  db:
+    image: postgres:17.5-alpine
+    container_name: db
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+    healthcheck:
+      test: pg_isready -U postgres
+      start_period: 10s
+      timeout: 1s
+      retries: 5
+      interval: 5s
+
+  agent:
+    build:
+      context: apps/agent
+      dockerfile: Dockerfile
+    container_name: agent
+    ports:
+      - "8123:8000"
+    depends_on:
+      redis:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+    environment:
+      CONTAINER_NAME: agent
+      LANGSMITH_API_KEY: ${LANGSMITH_API_KEY}
+      REDIS_URI: redis://redis:6379
+      DATABASE_URI: postgres://postgres:${POSTGRES_PASSWORD:-postgres}@db:5432/postgres?sslmode=disable
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    container_name: web
+    ports:
+      - "3000:3000"
+    depends_on:
+      agent:
+        condition: service_healthy
+    environment:
+      AGENT_URL: http://agent:8000
+      DATABASE_URI: postgres://postgres:${POSTGRES_PASSWORD:-postgres}@db:5432/postgres?sslmode=disable
+      LANGCHAIN_API_KEY: ${LANGSMITH_API_KEY}
+      LANGGRAPH_API_URL: http://agent:8000
