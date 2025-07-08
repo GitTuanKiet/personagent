@@ -12,7 +12,7 @@ dev-web:
 
 dev-agent:
 	@echo "Starting backend development server..."
-	@cd apps/agent && bunx @langchain/langgraph-cli@latest dev
+	@cd apps/agent && bun run dev
 
 # Run web and agent concurrently
 dev:

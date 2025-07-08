@@ -35,9 +35,6 @@ export const BROWSER_SYSTEM_PROMPT_TEMPLATE = new PromptTemplate({
 {state}
 
 ### Persona
-{persona}
-
-### Task
-{task}`,
-	inputVariables: ['state', 'persona', 'task'],
+{persona}`,
+	inputVariables: ['state', 'persona'],
 });

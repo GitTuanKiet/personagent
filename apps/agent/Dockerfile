@@ -1,9 +1,4 @@
 FROM langchain/langgraphjs-api:20
-ADD . /deps/agent
-ENV LANGSERVE_GRAPHS='{"agent":"./dist/bua/graph.js:graph"}'
-WORKDIR /deps/agent
-RUN npm i --omit=dev
-RUN (test ! -f /api/langgraph_api/js/build.mts && echo "Prebuild script not found, skipping") || tsx /api/langgraph_api/js/build.mts
 
 RUN apt-get update \
     && apt-get install -y procps wget gnupg \
@@ -17,3 +12,9 @@ RUN apt-get update \
 RUN npx -y patchright-core install-deps chrome
 
 ADD ./src/browser/dom/buildDomTree.js /home/tuankiet/code/personagent/apps/agent/src/browser/dom/buildDomTree.js
+ADD package.json /deps/agent/package.json
+WORKDIR /deps/agent
+RUN npm i --omit=dev
+ADD dist dist
+ENV LANGSERVE_GRAPHS='{"agent":"./dist/bua/graph.js:graph"}'
+# RUN (test ! -f /api/langgraph_api/js/build.mts && echo "Prebuild script not found, skipping") || tsx /api/langgraph_api/js/build.mts

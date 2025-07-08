@@ -112,6 +112,12 @@ export const BUAConfigurable = Annotation.Root({
 	sessionId: Annotation<string>({
 		reducer: (state, update) => update ?? state,
 	}),
+	/**
+	 * The user data directory to use for this session.
+	 */
+	url: Annotation<string | undefined>({
+		reducer: (state, update) => update ?? state,
+	}),
 });
 
 export function ensureConfiguration(config: RunnableConfig): typeof BUAConfigurable.State {
@@ -137,5 +143,6 @@ export function ensureConfiguration(config: RunnableConfig): typeof BUAConfigura
 			userDataDir,
 		},
 		sessionId,
+		url: configurable?.url ?? undefined,
 	};
 }

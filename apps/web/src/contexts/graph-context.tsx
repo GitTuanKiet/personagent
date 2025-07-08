@@ -1,17 +1,7 @@
 'use client';
 
-import { useUserContext } from '@/contexts/user-context';
-import type { GraphInput, Simulation, Thread, Persona } from '@/types';
-import { AIMessage, BaseMessage, coerceMessageLikeToMessage } from '@langchain/core/messages';
-import { useRuns } from '@/hooks/use-runs';
-import {
-	ALL_MODEL_NAMES,
-	NON_STREAMING_TEXT_MODELS,
-	NON_STREAMING_TOOL_CALLING_MODELS,
-	DEFAULT_MODEL_CONFIG,
-	DEFAULT_MODEL_NAME,
-	CustomModelConfig,
-} from '@/lib/models';
+import type { GraphInput, Thread, Persona, ThreadState } from '@/types';
+import { BaseMessage, coerceMessageLikeToMessage } from '@langchain/core/messages';
 import {
 	createContext,
 	Dispatch,
@@ -25,24 +15,21 @@ import {
 import { replaceOrInsertMessageChunk } from './utils';
 import { useThreadContext } from './thread-context';
 import { useAssistantContext } from './assistant-context';
-import { useApplicationContext } from './application-context';
 import { StreamWorkerService } from '../workers/graph-stream';
 import { toast } from 'sonner';
+import { useApplicationContext } from './application-context';
 
 interface GraphData {
-	runId: string | undefined;
 	isStreaming: boolean;
 	error: boolean;
 	messages: BaseMessage[];
 	setMessages: Dispatch<SetStateAction<BaseMessage[]>>;
-	state: Simulation;
+	state: ThreadState;
+	setState: Dispatch<SetStateAction<ThreadState>>;
 	firstTokenReceived: boolean;
-	feedbackSubmitted: boolean;
 	chatStarted: boolean;
 	setChatStarted: Dispatch<SetStateAction<boolean>>;
 	setIsStreaming: Dispatch<SetStateAction<boolean>>;
-	setFeedbackSubmitted: Dispatch<SetStateAction<boolean>>;
-	setState: Dispatch<SetStateAction<Simulation>>;
 	streamMessage: (params: GraphInput) => Promise<void>;
 	clearState: () => void;
 	switchSelectedThread: (thread: Thread) => void;
@@ -55,42 +42,33 @@ type GraphContentType = {
 const GraphContext = createContext<GraphContentType | undefined>(undefined);
 
 export function GraphProvider({ children }: { children: ReactNode }) {
-	const userData = useUserContext();
 	const assistantsData = useAssistantContext();
-	const appData = useApplicationContext();
 	const threadData = useThreadContext();
-	const { shareRun } = useRuns();
+	const { selectedApplication } = useApplicationContext();
 	const [chatStarted, setChatStarted] = useState(false);
 	const [messages, setMessages] = useState<BaseMessage[]>([]);
-	const [state, setState] = useState<Simulation>({
+	const [state, setState] = useState<ThreadState>({
+		scripts: {},
+		isDone: false,
+		usabilityIssues: [],
 		messages: [],
 		actions: [],
-		scripts: {},
 		nSteps: 0,
-		isDone: false,
 	});
 	const [isStreaming, setIsStreaming] = useState(false);
 	const [threadSwitched, setThreadSwitched] = useState(false);
 	const [firstTokenReceived, setFirstTokenReceived] = useState(false);
-	const [runId, setRunId] = useState<string>();
-	const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
 	const [error, setError] = useState(false);
 
 	useEffect(() => {
-		if (typeof window === 'undefined' || !userData.user) return;
+		if (typeof window === 'undefined') return;
 
 		// Get or create a new assistant if there isn't one set in state, and we're not
 		// loading all assistants already.
 		if (!assistantsData.selectedAssistant && !assistantsData.isLoadingAllAssistants) {
 			assistantsData.getOrCreateAssistant();
 		}
-
-		// Get or create a new application if there isn't one set in state, and we're not
-		// loading all applications already.
-		if (!appData.selectedApplication && !appData.isLoadingAllApplications) {
-			appData.getOrCreateApplication();
-		}
-	}, [userData.user]);
+	}, []);
 
 	// Very hacky way of ensuring updateState is not called when a thread is switched
 	useEffect(() => {
@@ -107,12 +85,7 @@ export function GraphProvider({ children }: { children: ReactNode }) {
 
 	// Attempt to load the thread if an ID is present in query params.
 	useEffect(() => {
-		if (
-			typeof window === 'undefined' ||
-			!userData.user ||
-			threadData.createThreadLoading ||
-			!threadData.threadId
-		) {
+		if (typeof window === 'undefined' || threadData.createThreadLoading || !threadData.threadId) {
 			return;
 		}
 
@@ -123,6 +96,7 @@ export function GraphProvider({ children }: { children: ReactNode }) {
 		searchOrCreateEffectRan.current = true;
 
 		threadData.getThread(threadData.threadId).then((thread) => {
+			console.log('🚀 ~ threadData.getThread ~ thread:', thread);
 			if (thread) {
 				switchSelectedThread(thread);
 				return;
@@ -131,20 +105,23 @@ export function GraphProvider({ children }: { children: ReactNode }) {
 			// Failed to fetch thread. Remove from query params
 			threadData.setThreadId(null);
 		});
-	}, [threadData.threadId, userData.user]);
+	}, [threadData.threadId]);
 
 	const clearState = () => {
+		setMessages([]);
 		setState({
+			scripts: {},
+			isDone: false,
+			usabilityIssues: [],
 			messages: [],
 			actions: [],
-			scripts: {},
 			nSteps: 0,
-			isDone: false,
 		});
 		setFirstTokenReceived(true);
 	};
 
 	const streamMessage = async (params: GraphInput) => {
+		console.log('🚀 ~ streamMessage ~ params:', params);
 		setFirstTokenReceived(false);
 		setError(false);
 		if (!assistantsData.selectedAssistant) {
@@ -155,9 +132,9 @@ export function GraphProvider({ children }: { children: ReactNode }) {
 			return;
 		}
 
-		if (!appData.selectedApplication) {
+		if (!selectedApplication) {
 			toast.error('Error', {
-				description: 'No application ID found',
+				description: 'No application selected',
 				duration: 5000,
 			});
 			return;
@@ -177,8 +154,6 @@ export function GraphProvider({ children }: { children: ReactNode }) {
 		}
 
 		setIsStreaming(true);
-		setRunId(undefined);
-		setFeedbackSubmitted(false);
 		let followupMessageId = '';
 
 		try {
@@ -187,10 +162,9 @@ export function GraphProvider({ children }: { children: ReactNode }) {
 				threadId: currentThreadId,
 				assistantId: assistantsData.selectedAssistant.assistant_id,
 				input: params,
-				modelName: threadData.modelName,
-				modelConfigs: threadData.modelConfigs,
-				application: appData.selectedApplication,
+				application: selectedApplication,
 				persona: assistantsData.selectedAssistant.config.configurable.persona as Persona,
+				sessionId: assistantsData.userId,
 			});
 
 			for await (const chunk of stream) {
@@ -198,31 +172,50 @@ export function GraphProvider({ children }: { children: ReactNode }) {
 					const { event, data } = chunk;
 
 					if (event === 'updates') {
-						console.log('updates', data);
-						setState((prevState) => ({
-							...prevState,
-							...Object.values(data)[0],
-						}));
+						const value = Object.values(data)[0];
+						console.log('🔄 STREAM UPDATE:', value);
+
+						setState((prevState) => {
+							const update = value.scripts;
+							if (!update) {
+								return {
+									...prevState,
+									...value,
+								};
+							}
+							const scripts = { ...prevState.scripts };
+							for (const step of Object.keys(update).map(Number)) {
+								if (scripts[step]) {
+									const ids = new Set(scripts[step].map((action) => action.id));
+									scripts[step] = [
+										...scripts[step],
+										...(update[step] ?? []).filter((action) => !ids.has(action.id)),
+									];
+								} else {
+									scripts[step] = update[step] ?? [];
+								}
+							}
+							const newState = {
+								...prevState,
+								...value,
+								scripts,
+							};
+
+							return newState;
+						});
 					}
 
 					if (event === 'messages') {
 						const [message, metadata] = data;
-						console.log('messages', message, metadata);
-						if (metadata.tags.includes('callModel')) {
+						console.log('🚀 ~ forawait ~ metadata:', metadata);
+						if (metadata.name === 'callModel') {
+							console.log('callModel', message);
 							if (!followupMessageId) {
 								followupMessageId = message.id;
 							}
-							setState((prevState) => ({
-								...prevState,
-								messages: replaceOrInsertMessageChunk(
-									prevState.messages,
-									coerceMessageLikeToMessage(message)[0],
-								),
-							}));
-							setMessages((prevMessages) => [
-								...prevMessages,
-								coerceMessageLikeToMessage(message)[0],
-							]);
+							setMessages((prevMessages) =>
+								replaceOrInsertMessageChunk(prevMessages, coerceMessageLikeToMessage(message)[0]),
+							);
 						}
 					}
 				} catch (e: any) {
@@ -247,41 +240,6 @@ export function GraphProvider({ children }: { children: ReactNode }) {
 		} finally {
 			setIsStreaming(false);
 		}
-
-		if (runId) {
-			// Chain `.then` to not block the stream
-			shareRun(runId).then(async (sharedRunURL) => {
-				setState((prevState) => {
-					const prevMessages = prevState.messages;
-					const newMsgs = prevMessages.map((msg) => {
-						if (
-							msg.id === followupMessageId &&
-							!(msg as AIMessage).tool_calls?.find((tc) => tc.name === 'langsmith_tool_ui')
-						) {
-							const toolCall = {
-								name: 'langsmith_tool_ui',
-								args: { sharedRunURL },
-								id: sharedRunURL?.split('https://smith.langchain.com/public/')[1].split('/')[0],
-							};
-							const castMsg = msg as AIMessage;
-							const newMessageWithToolCall = new AIMessage({
-								...castMsg,
-								content: castMsg.content,
-								id: castMsg.id,
-								tool_calls: castMsg.tool_calls ? [...castMsg.tool_calls, toolCall] : [toolCall],
-							});
-							return newMessageWithToolCall;
-						}
-
-						return msg;
-					});
-					return {
-						...prevState,
-						messages: newMsgs,
-					};
-				});
-			});
-		}
 	};
 
 	const switchSelectedThread = (thread: Thread) => {
@@ -292,36 +250,25 @@ export function GraphProvider({ children }: { children: ReactNode }) {
 		// isn't created on page load if one already exists.
 		threadData.setThreadId(thread.thread_id);
 
-		// Set the model name and config
-		if (thread.metadata?.modelName) {
-			threadData.setModelName(thread.metadata.modelName as ALL_MODEL_NAMES);
-			threadData.setModelConfig(
-				thread.metadata.modelName as ALL_MODEL_NAMES,
-				thread.metadata.modelConfig as CustomModelConfig,
-			);
-		} else {
-			threadData.setModelName(DEFAULT_MODEL_NAME);
-			threadData.setModelConfig(DEFAULT_MODEL_NAME, DEFAULT_MODEL_CONFIG);
+		// Load thread state into separate state variables
+		if (thread.values) {
+			setMessages(thread.values?.messages || []);
+			setState(thread.values as ThreadState);
 		}
-
-		setState(thread.values);
 	};
 
 	const contextValue: GraphContentType = {
 		graphData: {
-			runId,
 			isStreaming,
 			error,
-			state,
 			messages,
 			setMessages,
+			state,
 			setState,
 			firstTokenReceived,
-			feedbackSubmitted,
 			chatStarted,
 			setChatStarted,
 			setIsStreaming,
-			setFeedbackSubmitted,
 			streamMessage,
 			clearState,
 			switchSelectedThread,

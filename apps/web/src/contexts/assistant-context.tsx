@@ -1,12 +1,12 @@
 import type { Assistant } from '@langchain/langgraph-sdk';
 import { createContext, Dispatch, ReactNode, SetStateAction, useContext, useState } from 'react';
-import { useUserContext } from '@/contexts/user-context';
 import { createClient } from '@/hooks/utils';
 import { DEFAULT_GRAPH_ID, DEFAULT_PERSONA } from '@/constants';
 import { toast } from 'sonner';
-import { CreatePersonaData, Persona, UpdatePersonaData } from '@/types';
+import { CreatePersonaData, UpdatePersonaData } from '@/types';
 
 type AssistantContentType = {
+	userId: string;
 	assistants: Assistant[];
 	selectedAssistant: Assistant | undefined;
 	isLoadingAllAssistants: boolean;
@@ -36,8 +36,13 @@ export type EditCustomAssistantArgs = {
 
 const AssistantContext = createContext<AssistantContentType | undefined>(undefined);
 
-export function AssistantProvider({ children }: { children: ReactNode }) {
-	const { user } = useUserContext();
+export function AssistantProvider({
+	children,
+	visitorId,
+}: {
+	children: ReactNode;
+	visitorId: string;
+}) {
 	const [isLoadingAllAssistants, setIsLoadingAllAssistants] = useState(false);
 	const [isDeletingAssistant, setIsDeletingAssistant] = useState(false);
 	const [isCreatingAssistant, setIsCreatingAssistant] = useState(false);
@@ -51,7 +56,7 @@ export function AssistantProvider({ children }: { children: ReactNode }) {
 			const client = createClient();
 			const response = await client.assistants.search({
 				metadata: {
-					user_id: user.id,
+					user_id: visitorId,
 				},
 			});
 			setAssistants(response);
@@ -104,7 +109,7 @@ export function AssistantProvider({ children }: { children: ReactNode }) {
 				graphId: DEFAULT_GRAPH_ID,
 				name,
 				metadata: {
-					user_id: user.id,
+					user_id: visitorId,
 					...metadata,
 				},
 				config: {
@@ -144,7 +149,7 @@ export function AssistantProvider({ children }: { children: ReactNode }) {
 				name,
 				graphId: DEFAULT_GRAPH_ID,
 				metadata: {
-					user_id: user.id,
+					user_id: visitorId,
 					...metadata,
 				},
 				config: {
@@ -184,7 +189,7 @@ export function AssistantProvider({ children }: { children: ReactNode }) {
 			userAssistants = await client.assistants.search({
 				graphId: DEFAULT_GRAPH_ID,
 				metadata: {
-					user_id: user.id,
+					user_id: visitorId,
 				},
 				limit: 100,
 			});
@@ -206,9 +211,7 @@ export function AssistantProvider({ children }: { children: ReactNode }) {
 
 		setAssistants(userAssistants);
 
-		const defaultAssistant = userAssistants.find(
-			(assistant) => assistant.metadata?.isDefault || assistant.metadata?.pinned,
-		);
+		const defaultAssistant = userAssistants.find((assistant) => assistant.metadata?.isDefault);
 
 		if (!defaultAssistant) {
 			// Update the first assistant to be the default assistant, then set it as the selected assistant.
@@ -242,6 +245,7 @@ export function AssistantProvider({ children }: { children: ReactNode }) {
 	};
 
 	const contextValue: AssistantContentType = {
+		userId: visitorId,
 		assistants,
 		selectedAssistant,
 		isLoadingAllAssistants,

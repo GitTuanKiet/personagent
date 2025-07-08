@@ -30,6 +30,7 @@ export async function executeAction(
 	);
 
 	let nSteps = currentNSteps;
+	let isDone = false;
 
 	const messages: BaseMessage[] = [];
 	const performedActions: BrowserToolCall[] = [];
@@ -58,7 +59,9 @@ export async function executeAction(
 			const newPathHashes = new Set(
 				Array.from(newSelectorMap.values()).map((e) => e.hash.branchPathHash),
 			);
-			if (!newPathHashes.isSubsetOf(cachedPathHashes)) {
+
+			const hasNewElements = Array.from(newPathHashes).some((hash) => !cachedPathHashes.has(hash));
+			if (hasNewElements) {
 				// next action requires index but there are new elements on the page
 				const msg = `Something new appeared after action ${action.name} with args ${JSON.stringify(action.args)}`;
 				console.info(msg);
@@ -91,6 +94,11 @@ export async function executeAction(
 			}
 		}
 
+		if (action.name === 'done') {
+			isDone = true;
+			break;
+		}
+
 		messages.push(output);
 	}
 
@@ -98,5 +106,6 @@ export async function executeAction(
 		messages,
 		nSteps,
 		actions: performedActions,
+		isDone,
 	};
 }

@@ -1,6 +1,7 @@
 import type { UpdatesStreamEvent, MessagesTupleStreamEvent } from '@langchain/langgraph-sdk';
 import type { StreamWorkerMessage, StreamConfig } from './types';
-import type { Simulation } from '@/types';
+import type { Thread, ThreadState } from '@/types';
+import { createClient } from '@/hooks/utils';
 
 export class StreamWorkerService {
 	private worker: Worker;
@@ -11,7 +12,15 @@ export class StreamWorkerService {
 
 	async *streamData(
 		config: StreamConfig,
-	): AsyncGenerator<UpdatesStreamEvent<Simulation> | MessagesTupleStreamEvent> {
+	): AsyncGenerator<UpdatesStreamEvent<ThreadState> | MessagesTupleStreamEvent> {
+		const client = createClient();
+
+		const thread = (await client.threads.get(config.threadId)) as unknown as Thread;
+		console.log('🚀 ~ StreamWorkerService ~ thread:', thread);
+		if (thread.values?.isDone) {
+			return;
+		}
+
 		this.worker.postMessage(config);
 
 		while (true) {
@@ -20,7 +29,6 @@ export class StreamWorkerService {
 			});
 
 			const { type } = event.data;
-			console.log('🚀 ~ StreamWorkerService ~ *streamData ~ event.data:', event.data);
 
 			if (type === 'error') {
 				throw new Error(event.data.error);

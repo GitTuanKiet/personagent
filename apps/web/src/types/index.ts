@@ -7,54 +7,6 @@ export type BrowserToolCall = Omit<ToolCall, 'name'> & {
 	name: string;
 };
 
-const baseFieldSchema = z.object({
-	name: z
-		.string()
-		.min(1, 'Name is required')
-		.min(2, 'Name must be at least 2 characters')
-		.max(50, 'Name must be less than 50 characters')
-		.regex(
-			/^[a-zA-Z0-9\s\-_]+$/,
-			'Name can only contain letters, numbers, spaces, hyphens, and underscores',
-		),
-	description: z.string().max(500, 'Description must be less than 500 characters').optional(),
-});
-
-// ============================================
-// APPLICATION SCHEMAS & TYPES
-// ============================================
-
-// Icon Data Schema
-export const iconDataSchema = z.object({
-	iconName: z.string().min(1, 'Icon name is required'),
-	iconColor: z.string().regex(/^#[0-9A-F]{6}$/i, 'Invalid color format'),
-	emoji: z.string().optional(),
-});
-
-// Browser Profile Schema
-export const browserProfileSchema = z.object({
-	blockedDomains: z.array(z.string()).optional(),
-	allowedDomains: z.array(z.string()).optional(),
-	extraHTTPHeaders: z.record(z.string(), z.string()).optional(),
-});
-
-// Application Create Schema (used by both frontend and backend)
-export const createApplicationSchema = z.object({
-	...baseFieldSchema.shape,
-	iconData: iconDataSchema.optional(),
-	useVision: z.boolean().default(false),
-	recursionLimit: z
-		.number()
-		.min(1, 'Recursion limit must be at least 1')
-		.max(1000, 'Recursion limit must be less than 1000')
-		.default(50),
-	browserProfile: browserProfileSchema.optional(),
-	isActive: z.boolean().default(true),
-});
-
-// Application Update Schema
-export const updateApplicationSchema = createApplicationSchema.partial();
-
 // ============================================================================
 // ASSISTANT SCHEMAS
 // ============================================================================
@@ -83,8 +35,20 @@ export const languageEnum = z.enum(['vietnamese', 'english']);
 
 // Assistant Form Schema (used by both frontend and backend)
 export const createAssistantSchema = z.object({
-	...baseFieldSchema.shape,
-	iconData: iconDataSchema,
+	name: z
+		.string()
+		.min(1, 'Name is required')
+		.min(2, 'Name must be at least 2 characters')
+		.max(50, 'Name must be less than 50 characters')
+		.regex(
+			/^[a-zA-Z0-9\s\-_]+$/,
+			'Name can only contain letters, numbers, spaces, hyphens, and underscores',
+		),
+	description: z.string().max(500, 'Description must be less than 500 characters').optional(),
+	iconData: z.object({
+		iconName: z.string().min(1, 'Icon name is required'),
+		iconColor: z.string().regex(/^#[0-9A-F]{6}$/i, 'Invalid color format'),
+	}),
 	ageGroup: z.union([ageGroupEnum, z.undefined()]).optional(),
 	digitalSkillLevel: z.union([digitalSkillLevelEnum, z.undefined()]).optional(),
 	behaviorTraits: z.array(behaviorTraitEnum),
@@ -95,25 +59,11 @@ export const createAssistantSchema = z.object({
 
 // Assistant Update Schema
 export const updateAssistantSchema = createAssistantSchema.partial();
-
-// Inferred Types
-export type IconData = z.infer<typeof iconDataSchema>;
-export type BrowserProfile = z.infer<typeof browserProfileSchema>;
+4;
 
 // ============================================================================
 // TYPE DEFINITIONS
 // ============================================================================
-
-// Application Types
-export type CreateApplicationData = z.infer<typeof createApplicationSchema>;
-export type UpdateApplicationData = z.infer<typeof updateApplicationSchema>;
-
-// Application Interface (matches database schema)
-export interface Application extends CreateApplicationData {
-	id: string;
-	createdAt: Date;
-	updatedAt: Date;
-}
 
 // Assistant Types
 export type PersonaAgeGroup = z.infer<typeof ageGroupEnum>;
@@ -147,7 +97,7 @@ export interface UsabilityIssue {
 	stepIndex?: number;
 }
 
-export interface Simulation {
+export interface ThreadState {
 	messages: BaseMessage[];
 	actions: BrowserToolCall[];
 	scripts: Record<number, BrowserToolCall[]>;
@@ -158,7 +108,7 @@ export interface Simulation {
 	usabilityIssues?: UsabilityIssue[];
 }
 
-export type Thread = ThreadType<Simulation>;
+export type Thread = ThreadType<ThreadState>;
 
 export interface GraphInput {
 	messages?: Record<string, any>[];

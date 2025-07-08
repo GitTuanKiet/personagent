@@ -5,15 +5,13 @@ import _ from 'lodash';
 import { cleanAttribute } from './utils.js';
 import { BrowserSession, type BrowserSessionArgs } from './session/index.js';
 import { randomUUID } from 'node:crypto';
-import { WebSocketServer, WebSocket } from 'ws';
+import { createServer, type IncomingMessage, type ServerResponse } from 'http';
 
 @singleton()
 export class BrowserManager {
 	private __cachedTurndownServices: [TurndownService | null, TurndownService | null] = [null, null];
 	private __sessions: Map<string, BrowserSession> = new Map();
-	private __wss: WebSocketServer | null = null;
-	private __streamingSessions: Map<string, Set<WebSocket>> = new Map();
-	private __sessionIntervals: Map<string, NodeJS.Timeout> = new Map();
+	private __httpServer: import('http').Server | null = null;
 	private __serverPort: number = 3001;
 	private __serverHost: string = process.env.CONTAINER_NAME || 'localhost';
 
@@ -51,8 +49,6 @@ export class BrowserManager {
 			await session.stop();
 			this.__sessions.delete(sessionId);
 		}
-		this.stopStreaming(sessionId);
-		this.__streamingSessions.delete(sessionId);
 	}
 
 	// #endregion
@@ -65,104 +61,63 @@ export class BrowserManager {
 			);
 		}
 
-		return `ws://${this.__serverHost}:${this.__serverPort}/stream?sessionId=${sessionId}`;
+		return `http://${this.__serverHost}:${this.__serverPort}/screenshot?sessionId=${sessionId}`;
 	}
 
 	private async startServer(): Promise<void> {
-		if (this.__wss) return;
+		if (this.__httpServer) return;
 
-		this.__wss = new WebSocketServer({ port: this.__serverPort, path: '/stream' });
+		this.__httpServer = createServer(async (req: IncomingMessage, res: ServerResponse) => {
+			// Normalize URL for local access
+			const requestUrl = new URL(
+				req.url ?? '/',
+				`http://${this.__serverHost}:${this.__serverPort}`,
+			);
 
-		this.__wss.on('connection', (ws, req) => {
-			const url = new URL(req.url!, `http://${req.headers.host}`);
-			const sessionId = url.searchParams.get('sessionId');
+			// Only handle GET /screenshot requests
+			if (req.method === 'GET' && requestUrl.pathname === '/screenshot') {
+				const sessionId = requestUrl.searchParams.get('sessionId');
 
-			if (!sessionId) {
-				ws.close(1008, 'Session ID required');
+				if (!sessionId) {
+					res.writeHead(400, { 'Content-Type': 'application/json' });
+					res.end(JSON.stringify({ error: 'sessionId parameter is required' }));
+					return;
+				}
+
+				const session = await this.getSession(sessionId);
+				const page = session?.agentCurrentPage;
+
+				if (!page) {
+					res.writeHead(404, { 'Content-Type': 'application/json' });
+					res.end(JSON.stringify({ error: 'Session or page not found' }));
+					return;
+				}
+
+				try {
+					const buffer = await page.screenshot({ type: 'jpeg', quality: 70, fullPage: false });
+					res.writeHead(200, {
+						'Content-Type': 'image/jpeg',
+						'Content-Length': buffer.length,
+						'Cache-Control': 'no-cache, no-store, must-revalidate',
+					});
+					res.end(buffer);
+				} catch (error) {
+					console.error(`Screenshot error ${sessionId}:`, error);
+					res.writeHead(500, { 'Content-Type': 'application/json' });
+					res.end(JSON.stringify({ error: 'screenshot_error' }));
+				}
 				return;
 			}
 
-			this.handleConnection(sessionId, ws);
+			// Fallback 404 for other routes
+			res.writeHead(404);
+			res.end();
 		});
 
-		console.log(`🎥 Stream server ready on port ${this.__serverPort}`);
-	}
-
-	private async handleConnection(sessionId: string, ws: WebSocket): Promise<void> {
-		const session = await this.getSession(sessionId);
-		if (!session) {
-			ws.close(1008, 'Session not found');
-			return;
-		}
-
-		// Add connection
-		if (!this.__streamingSessions.has(sessionId)) {
-			this.__streamingSessions.set(sessionId, new Set());
-		}
-		this.__streamingSessions.get(sessionId)!.add(ws);
-
-		console.log(`📱 Client connected: ${sessionId}`);
-
-		// Start streaming at 60 FPS
-		this.startStreaming(sessionId);
-
-		// Send first frame immediately
-		this.sendFrame(sessionId);
-
-		ws.on('close', () => {
-			const sessionWs = this.__streamingSessions.get(sessionId);
-			if (sessionWs) {
-				sessionWs.delete(ws);
-				if (sessionWs.size === 0) {
-					this.stopStreaming(sessionId);
-					this.__streamingSessions.delete(sessionId);
-				}
-			}
+		this.__httpServer.listen(this.__serverPort, () => {
+			console.log(`📸 Screenshot server ready on port ${this.__serverPort}`);
 		});
 	}
-
-	private startStreaming(sessionId: string): void {
-		if (this.__sessionIntervals.has(sessionId)) return;
-
-		// 60 FPS = 16.67ms interval
-		const timer = setInterval(() => this.sendFrame(sessionId), 1000 / 60);
-		this.__sessionIntervals.set(sessionId, timer);
-	}
-
-	private stopStreaming(sessionId: string): void {
-		const timer = this.__sessionIntervals.get(sessionId);
-		if (timer) {
-			clearInterval(timer);
-			this.__sessionIntervals.delete(sessionId);
-		}
-	}
-
-	private async sendFrame(sessionId: string): Promise<void> {
-		try {
-			const session = await this.getSession(sessionId);
-			const page = session?.agentCurrentPage;
-			const wsSet = this.__streamingSessions.get(sessionId);
-
-			if (!page || !wsSet || wsSet.size === 0) return;
-
-			const buffer = await page.screenshot({ type: 'jpeg', quality: 70, fullPage: false });
-			const message = JSON.stringify({
-				type: 'frame',
-				data: buffer.toString('base64'),
-				timestamp: Date.now(),
-			});
-
-			for (const ws of wsSet) {
-				if (ws.readyState === WebSocket.OPEN) {
-					ws.send(message);
-				}
-			}
-		} catch (error) {
-			console.error(`Frame error ${sessionId}:`, error);
-		}
-	}
-
-	// #endregion
 
 	getTurndownService(includeLinks: boolean = false): TurndownService {
 		const index = includeLinks ? 0 : 1;

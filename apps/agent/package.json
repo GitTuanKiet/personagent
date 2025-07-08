@@ -11,7 +11,7 @@
     "format:check": "prettier --config .prettierrc --check \"src\" \"scripts\"",
     "lint": "eslint src",
     "lintfix": "eslint src --fix",
-    "dev": "langgraphjs dev --config langgraph.dev.json",
+    "dev": "langgraphjs dev --config dev/langgraph.json",
     "dockerfile": "langgraphjs dockerfile Dockerfile --config langgraph.json"
   },
   "dependencies": {

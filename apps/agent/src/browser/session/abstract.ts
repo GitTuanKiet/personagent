@@ -1156,26 +1156,26 @@ try {
 				}
 			}
 
-			if (this.browserProfile.blockedDomains) {
-				for (let blockedDomain of this.browserProfile.blockedDomains) {
-					blockedDomain = blockedDomain.toLowerCase();
+			if (!this.browserProfile.blockedDomains) return true;
 
-					if (blockedDomain.includes('*')) {
-						let parentDomain;
-						if (blockedDomain.startsWith('*.'))
-							parentDomain = blockedDomain.slice(2); // Remove the '*.' prefix
-						else parentDomain = blockedDomain;
+			for (let blockedDomain of this.browserProfile.blockedDomains) {
+				blockedDomain = blockedDomain.toLowerCase();
 
-						if (domain == parentDomain || minimatch(domain, blockedDomain)) {
-							return false;
-						}
-					} else {
-						if (domain == blockedDomain) return false;
+				if (blockedDomain.includes('*')) {
+					let parentDomain;
+					if (blockedDomain.startsWith('*.'))
+						parentDomain = blockedDomain.slice(2); // Remove the '*.' prefix
+					else parentDomain = blockedDomain;
+
+					if (domain == parentDomain || minimatch(domain, blockedDomain)) {
+						return false;
 					}
+				} else {
+					if (domain == blockedDomain) return false;
 				}
 			}
 
-			return false;
+			return true;
 		} catch (e) {
 			console.error(
 				`❌  Error checking URL allowlist: ${(e as Error).name}: ${(e as Error).message}`,

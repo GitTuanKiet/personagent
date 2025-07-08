@@ -1,132 +1,42 @@
-import {
-	ALL_MODEL_NAMES,
-	ALL_MODELS,
-	DEFAULT_MODEL_CONFIG,
-	DEFAULT_MODEL_NAME,
-} from '@/lib/models';
-import type { CustomModelConfig } from '@/lib/models';
 import { createClient } from '../hooks/utils';
 import { createContext, ReactNode, useContext, useMemo, useState } from 'react';
-import { useUserContext } from './user-context';
-import { useApplicationContext } from './application-context';
 import { useAssistantContext } from './assistant-context';
 import type { Thread } from '@/types';
 import { toast } from 'sonner';
 import { useQueryState } from 'nuqs';
 
 type ThreadContentType = {
+	userId: string;
 	threadId: string | null;
 	userThreads: Thread[];
 	isUserThreadsLoading: boolean;
-	modelName: ALL_MODEL_NAMES;
-	modelConfig: CustomModelConfig;
-	modelConfigs: Record<ALL_MODEL_NAMES, CustomModelConfig>;
 	createThreadLoading: boolean;
 	getThread: (id: string) => Promise<Thread | undefined>;
 	createThread: () => Promise<Thread | undefined>;
 	getUserThreads: () => Promise<void>;
 	deleteThread: (id: string, clearMessages: () => void) => Promise<void>;
 	setThreadId: (id: string | null) => void;
-	setModelName: (name: ALL_MODEL_NAMES) => void;
-	setModelConfig: (modelName: ALL_MODEL_NAMES, config: CustomModelConfig) => void;
 };
 
 const ThreadContext = createContext<ThreadContentType | undefined>(undefined);
 
-export function ThreadProvider({ children }: { children: ReactNode }) {
-	const { user } = useUserContext();
-	const { selectedApplication } = useApplicationContext();
+export function ThreadProvider({
+	children,
+	visitorId,
+}: {
+	children: ReactNode;
+	visitorId: string;
+}) {
 	const { selectedAssistant } = useAssistantContext();
 	const [threadId, setThreadId] = useQueryState('threadId');
 	const [userThreads, setUserThreads] = useState<Thread[]>([]);
 	const [isUserThreadsLoading, setIsUserThreadsLoading] = useState(false);
-	const [modelName, setModelName] = useState<ALL_MODEL_NAMES>(DEFAULT_MODEL_NAME);
 	const [createThreadLoading, setCreateThreadLoading] = useState(false);
 
-	const [modelConfigs, setModelConfigs] = useState<Record<ALL_MODEL_NAMES, CustomModelConfig>>(
-		() => {
-			// Initialize with default configs for all models
-			const initialConfigs: Record<ALL_MODEL_NAMES, CustomModelConfig> = {} as Record<
-				ALL_MODEL_NAMES,
-				CustomModelConfig
-			>;
-
-			ALL_MODELS.forEach((model) => {
-				const modelKey = model.modelName || model.name;
-
-				initialConfigs[modelKey] = {
-					...model.config,
-					provider: model.config.provider,
-					temperatureRange: {
-						...(model.config.temperatureRange || DEFAULT_MODEL_CONFIG.temperatureRange),
-					},
-					maxTokens: {
-						...(model.config.maxTokens || DEFAULT_MODEL_CONFIG.maxTokens),
-					},
-					...(model.config.provider === 'azure_openai' && {
-						azureConfig: {
-							azureOpenAIApiKey: process.env._AZURE_OPENAI_API_KEY || '',
-							azureOpenAIApiInstanceName: process.env._AZURE_OPENAI_API_INSTANCE_NAME || '',
-							azureOpenAIApiDeploymentName: process.env._AZURE_OPENAI_API_DEPLOYMENT_NAME || '',
-							azureOpenAIApiVersion: process.env._AZURE_OPENAI_API_VERSION || '2024-08-01-preview',
-							azureOpenAIBasePath: process.env._AZURE_OPENAI_API_BASE_PATH,
-						},
-					}),
-				};
-			});
-			return initialConfigs;
-		},
-	);
-
-	const modelConfig = useMemo(() => {
-		// Try exact match first, then try without "azure/" or "groq/" prefixes
-		return modelConfigs[modelName] || modelConfigs[modelName.replace('azure/', '')];
-	}, [modelName, modelConfigs]);
-
-	const setModelConfig = (modelName: ALL_MODEL_NAMES, config: CustomModelConfig) => {
-		setModelConfigs((prevConfigs) => {
-			if (!config || !modelName) {
-				return prevConfigs;
-			}
-			return {
-				...prevConfigs,
-				[modelName]: {
-					...config,
-					provider: config.provider,
-					temperatureRange: {
-						...(config.temperatureRange || DEFAULT_MODEL_CONFIG.temperatureRange),
-					},
-					maxTokens: {
-						...(config.maxTokens || DEFAULT_MODEL_CONFIG.maxTokens),
-					},
-					...(config.provider === 'azure_openai' && {
-						azureConfig: {
-							...config.azureConfig,
-							azureOpenAIApiKey:
-								config.azureConfig?.azureOpenAIApiKey || process.env._AZURE_OPENAI_API_KEY || '',
-							azureOpenAIApiInstanceName:
-								config.azureConfig?.azureOpenAIApiInstanceName ||
-								process.env._AZURE_OPENAI_API_INSTANCE_NAME ||
-								'',
-							azureOpenAIApiDeploymentName:
-								config.azureConfig?.azureOpenAIApiDeploymentName ||
-								process.env._AZURE_OPENAI_API_DEPLOYMENT_NAME ||
-								'',
-							azureOpenAIApiVersion:
-								config.azureConfig?.azureOpenAIApiVersion || '2024-08-01-preview',
-							azureOpenAIBasePath:
-								config.azureConfig?.azureOpenAIBasePath || process.env._AZURE_OPENAI_API_BASE_PATH,
-						},
-					}),
-				},
-			};
-		});
-	};
-
 	const createThread = async (): Promise<Thread | undefined> => {
-		if (!selectedApplication || !selectedAssistant) {
-			toast.error('Please select an application and assistant', {
-				description: 'Please select an application and assistant to create a thread.',
+		if (!selectedAssistant) {
+			toast.error('Please select an assistant', {
+				description: 'Please select an assistant to create a thread.',
 				duration: 5000,
 			});
 			return;
@@ -138,17 +48,8 @@ export function ThreadProvider({ children }: { children: ReactNode }) {
 		try {
 			const thread = await client.threads.create({
 				metadata: {
-					user_id: user.id,
-					modelName: modelName,
-					modelConfig: {
-						...modelConfig,
-						// Ensure Azure config is included if needed
-						...(modelConfig.provider === 'azure_openai' && {
-							azureConfig: modelConfig.azureConfig,
-						}),
-					},
-					applicationId: String(selectedApplication.id),
-					assistantId: selectedAssistant.assistant_id,
+					user_id: visitorId,
+					assistant_id: selectedAssistant.assistant_id,
 				},
 			});
 
@@ -175,9 +76,8 @@ export function ThreadProvider({ children }: { children: ReactNode }) {
 
 			const userThreads = await client.threads.search({
 				metadata: {
-					user_id: user.id,
-					...(selectedApplication && { applicationId: String(selectedApplication.id) }),
-					...(selectedAssistant && { assistantId: selectedAssistant.assistant_id }),
+					user_id: visitorId,
+					...(selectedAssistant && { assistant_id: selectedAssistant.assistant_id }),
 				},
 				limit: 100,
 			});
@@ -231,20 +131,16 @@ export function ThreadProvider({ children }: { children: ReactNode }) {
 	};
 
 	const contextValue: ThreadContentType = {
+		userId: visitorId,
 		threadId,
 		userThreads,
 		isUserThreadsLoading,
-		modelName,
-		modelConfig,
-		modelConfigs,
 		createThreadLoading,
 		getThread,
 		createThread,
 		getUserThreads,
 		deleteThread,
 		setThreadId,
-		setModelName,
-		setModelConfig,
 	};
 
 	return <ThreadContext.Provider value={contextValue}>{children}</ThreadContext.Provider>;

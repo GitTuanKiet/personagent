@@ -7,11 +7,9 @@ import { Skeleton } from '@workspace/ui/components/skeleton';
 import { useEffect, useState } from 'react';
 import type { Thread } from '@/types';
 import { MessagesSquare } from 'lucide-react';
-import { TighterText } from '../ui/header';
+import { TighterText } from '../ui/tighter-text';
 import { useGraphContext } from '@/contexts/graph-context';
-import { toast } from 'sonner';
 import React from 'react';
-import { useUserContext } from '@/contexts/user-context';
 import { useThreadContext } from '@/contexts/thread-context';
 
 interface ThreadHistoryProps {
@@ -31,12 +29,12 @@ const ThreadItem = (props: ThreadProps) => {
 
 	return (
 		<div
-			className="flex flex-row gap-0 items-center justify-start w-full"
+			className="flex flex-row items-center justify-start w-full"
 			onMouseEnter={() => setIsHovering(true)}
 			onMouseLeave={() => setIsHovering(false)}
 		>
 			<Button
-				className="px-2 justify-start items-center flex-grow min-w-[191px] pr-0"
+				className="hover:bg-muted focus-visible:bg-muted rounded-lg transition-all focus-visible:ring-2 focus-visible:outline-none px-2 justify-start items-center flex-grow min-w-[191px] pr-0"
 				size="sm"
 				variant="ghost"
 				onClick={props.onClick}
@@ -134,7 +132,7 @@ interface ThreadsListProps {
 
 function ThreadsList(props: ThreadsListProps) {
 	return (
-		<div className="flex flex-col pt-3 gap-4">
+		<div className="flex flex-col items-stretch gap-1.5 pt-3">
 			{Object.entries(props.groupedThreads).map(([group, threads]) =>
 				threads.length > 0 ? (
 					<div key={group}>
@@ -155,27 +153,18 @@ function ThreadsList(props: ThreadsListProps) {
 
 export function ThreadHistoryComponent(props: ThreadHistoryProps) {
 	const {
-		graphData: { setState, switchSelectedThread, clearState },
+		graphData: { switchSelectedThread, clearState },
 	} = useGraphContext();
 	const { deleteThread, getUserThreads, userThreads, isUserThreadsLoading } = useThreadContext();
-	const { user } = useUserContext();
 	const [open, setOpen] = useState(false);
 
 	useEffect(() => {
-		if (typeof window == 'undefined' || userThreads.length || !user) return;
+		if (typeof window == 'undefined' || userThreads.length) return;
 
 		getUserThreads();
-	}, [user]);
+	}, [userThreads.length]);
 
 	const handleDeleteThread = async (id: string) => {
-		if (!user) {
-			toast.error('Failed to delete thread', {
-				description: 'User not found',
-				duration: 5000,
-			});
-			return;
-		}
-
 		await deleteThread(id, () => clearState());
 	};
 
@@ -198,7 +187,7 @@ export function ThreadHistoryComponent(props: ThreadHistoryProps) {
 			</SheetTrigger>
 			<SheetContent
 				side="left"
-				className="border-none overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100"
+				className="overflow-y-scroll scroll-smooth bg-inherit px-4 pt-8 border-none"
 				aria-describedby={undefined}
 			>
 				<SheetTitle>

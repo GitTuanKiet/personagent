@@ -1,9 +1,9 @@
 import { ThreadPrimitive, useThreadRuntime } from '@assistant-ui/react';
 import { Avatar, AvatarFallback, AvatarImage } from '@workspace/ui/components/avatar';
 import { FC, useMemo } from 'react';
-import { TighterText } from '../ui/header';
+import { TighterText } from '../ui/tighter-text';
 import { Button } from '@workspace/ui/components/button';
-import { ApplicationSelect, PersonaSelect } from '../select';
+import { ApplicationSelect } from '@/components/application-select';
 
 const QUICK_START_PROMPTS = [
 	'Đăng nhập vào hệ thống với email và password',
@@ -46,7 +46,7 @@ const QuickStartPrompts = () => {
 						key={`quick-start-prompt-${index}`}
 						onClick={() => handleClick(prompt)}
 						variant="outline"
-						className="min-h-[60px] w-full flex items-center justify-center p-6 whitespace-normal text-gray-500 hover:text-gray-700 transition-colors ease-in rounded-2xl"
+						className="hover:bg-muted/80 flex max-w-sm grow basis-0 flex-col items-center justify-center rounded-lg border p-3 transition-colors ease-in"
 					>
 						<p className="text-center break-words text-sm font-normal">{prompt}</p>
 					</Button>
@@ -58,30 +58,18 @@ const QuickStartPrompts = () => {
 
 interface QuickStartButtonsProps {
 	composer: React.ReactNode;
-	userId?: string;
 	chatStarted?: boolean;
 }
 
 const QuickStartButtons = (props: QuickStartButtonsProps) => {
 	return (
 		<div className="flex flex-col gap-8 items-center justify-center w-full">
-			<div className="flex flex-col gap-6">
-				<p className="text-gray-600 text-sm">Start by selecting application and persona</p>
-				<div className="flex flex-row gap-4 items-center justify-center w-full">
-					<ApplicationSelect
-						userId={props.userId}
-						chatStarted={props.chatStarted || false}
-						className="w-fit"
-					/>
-					<PersonaSelect
-						userId={props.userId}
-						chatStarted={props.chatStarted || false}
-						className="w-fit"
-					/>
-				</div>
+			<div className="flex flex-col gap-6 w-full items-center justify-center">
+				<p className="text-gray-600 text-sm">Bắt đầu bằng ứng dụng</p>
+				<ApplicationSelect />
 			</div>
-			<div className="flex flex-col gap-6 mt-2 w-full">
-				<p className="text-gray-600 text-sm">then with a task</p>
+			<div className="flex flex-col gap-6 w-full">
+				<p className="text-gray-600 text-sm">với nhiệm vụ</p>
 				{props.composer}
 				<QuickStartPrompts />
 			</div>
@@ -91,28 +79,23 @@ const QuickStartButtons = (props: QuickStartButtonsProps) => {
 
 interface ThreadWelcomeProps {
 	composer: React.ReactNode;
-	userId?: string;
 	chatStarted?: boolean;
 }
 
 export const ThreadWelcome: FC<ThreadWelcomeProps> = (props: ThreadWelcomeProps) => {
 	return (
 		<ThreadPrimitive.Empty>
-			<div className="flex items-center justify-center mt-16 w-full">
+			<div className="flex flex-col items-center justify-center w-full max-w-[var(--thread-max-width)] px-4 pt-8 gap-4">
 				<div className="text-center max-w-3xl w-full">
 					<Avatar className="mx-auto">
-						<AvatarImage src="/window.svg" alt="Window Logo" />
+						<AvatarImage src="/globe.svg" alt="Globe Logo" />
 						<AvatarFallback>W</AvatarFallback>
 					</Avatar>
 					<TighterText className="mt-4 text-lg font-medium">
-						Bạn muốn mô phỏng trải nghiệm người dùng nào hôm nay?
+						Bạn muốn mô phỏng người dùng nào?
 					</TighterText>
 					<div className="mt-8 w-full">
-						<QuickStartButtons
-							composer={props.composer}
-							userId={props.userId}
-							chatStarted={props.chatStarted}
-						/>
+						<QuickStartButtons composer={props.composer} chatStarted={props.chatStarted} />
 					</div>
 				</div>
 			</div>

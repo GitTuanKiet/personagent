@@ -39,6 +39,7 @@ services:
     container_name: agent
     ports:
       - "8123:8000"
+      - "3001:3001"
     depends_on:
       redis:
         condition: service_healthy

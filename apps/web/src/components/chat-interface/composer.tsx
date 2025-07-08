@@ -9,16 +9,21 @@ import { DragAndDropWrapper } from './drag-drop-wrapper';
 import { ComposerActionsPopOut } from './composer-actions-popout';
 
 const GENERIC_PLACEHOLDERS = [
-	"Share your big idea and let's write something amazing",
-	'Type your vision for the next great piece of content',
-	'Your masterpiece begins with this prompt',
-	'What would you like us to write about today?',
-	"Drop your content idea here and let's create",
-	'Your next great piece starts with this prompt',
-	'Share your story idea and watch it unfold',
-	"Let's write something incredible - start here",
-	'Your writing journey begins with this prompt',
-	'Turn your idea into content magic - start here',
+	'Tìm kiếm sản phẩm iPhone 15',
+	'Đăng nhập vào hệ thống với email và password',
+	'Tìm kiếm sản phẩm iPhone 15 và thêm vào giỏ hàng',
+	'Điền form đăng ký tài khoản mới với thông tin cá nhân',
+	'Thực hiện thanh toán đơn hàng bằng thẻ tín dụng',
+	'Cập nhật thông tin profile và thay đổi mật khẩu',
+	'Tìm kiếm và đặt chỗ khách sạn tại Hà Nội',
+	'Upload ảnh đại diện và cập nhật thông tin cá nhân',
+	'Tạo bài post mới trên mạng xã hội với hình ảnh',
+	'Lọc sản phẩm theo giá và thương hiệu',
+	'Thêm sản phẩm vào wishlist và chia sẻ với bạn bè',
+	'Điền form liên hệ và gửi tin nhắn hỗ trợ',
+	'Đăng ký nhận newsletter và xác nhận email',
+	'Tìm kiếm và đặt lịch hẹn với bác sĩ',
+	'Thực hiện chuyển khoản ngân hàng online',
 ];
 
 const getRandomPlaceholder = () => {
@@ -41,7 +46,7 @@ const CircleStopIcon = () => {
 
 interface ComposerProps {
 	chatStarted: boolean;
-	userId: string | undefined;
+	isDone: boolean;
 }
 
 export const Composer: FC<ComposerProps> = (props: ComposerProps) => {
@@ -53,14 +58,15 @@ export const Composer: FC<ComposerProps> = (props: ComposerProps) => {
 
 	return (
 		<DragAndDropWrapper>
-			<ComposerPrimitive.Root className="focus-within:border-aui-ring/20 flex flex-col w-full min-h-[64px] flex-wrap items-center justify-center border px-2.5 shadow-sm transition-colors ease-in bg-white rounded-2xl">
+			<ComposerPrimitive.Root className="focus-within:border-ring/20 flex w-full flex-wrap items-end rounded-lg border bg-inherit px-2.5 shadow-sm transition-colors ease-in">
 				<div className="flex flex-row w-full items-center justify-start my-auto">
-					<ComposerActionsPopOut userId={props.userId} chatStarted={props.chatStarted} />
+					<ComposerActionsPopOut chatStarted={props.chatStarted} />
 					<ComposerPrimitive.Input
 						autoFocus
 						placeholder={placeholder}
 						rows={1}
-						className="placeholder:text-muted-foreground max-h-40 flex-grow resize-none border-none bg-transparent px-2 py-4 text-sm outline-none focus:ring-0 disabled:cursor-not-allowed"
+						className="placeholder:text-muted-foreground overflow-hidden max-h-15 flex-grow resize-none border-none bg-transparent px-2 py-4 text-sm outline-none focus:ring-0 disabled:cursor-not-allowed"
+						disabled={props.isDone}
 					/>
 					<ThreadPrimitive.If running={false}>
 						<ComposerPrimitive.Send asChild>

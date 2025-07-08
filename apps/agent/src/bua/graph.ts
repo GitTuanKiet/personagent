@@ -13,15 +13,11 @@ import { BUAConfigurable } from './configuration.js';
  * in the last message, otherwise routes to END.
  *
  * @param {BUAState} state The current state of the thread.
- * @returns {"nodeBeforeAction" | typeof END | "createBrowser"} The next node to execute.
+ * @returns {"executeAction" | typeof END} The next node to execute.
  */
-function takeActionOrEnd(state: BUAState): 'createBrowser' | 'executeAction' | typeof END {
-	if (state.actions.length === 0) {
+function takeActionOrEnd(state: BUAState): 'executeAction' | typeof END {
+	if (state.isDone || state.actions.length === 0) {
 		return END;
-	}
-
-	if (!state.streamUrl) {
-		return 'createBrowser';
 	}
 
 	return 'executeAction';
@@ -41,7 +37,11 @@ function reinvokeModelOrAnalyze(state: BUAState): 'callModel' | 'analyzeUsabilit
 	return 'callModel';
 }
 
-function takeModelOrEnd(state: BUAState): 'callModel' | typeof END {
+function takeBrowserOrModelOrEnd(state: BUAState): 'createBrowser' | 'callModel' | typeof END {
+	if (!state.streamUrl) {
+		return 'createBrowser';
+	}
+
 	if (state.isSimulatedPrompt) {
 		return 'callModel';
 	}
@@ -51,14 +51,14 @@ function takeModelOrEnd(state: BUAState): 'callModel' | typeof END {
 
 const workflow = new StateGraph(BUAAnnotation, BUAConfigurable)
 	.addNode('validator', validator)
-	.addNode('callModel', callModel)
 	.addNode('createBrowser', createBrowser)
+	.addNode('callModel', callModel)
 	.addNode('executeAction', executeAction)
 	.addNode('analyzeUsability', analyzeUsability)
 	.addEdge(START, 'validator')
-	.addConditionalEdges('validator', takeModelOrEnd, ['callModel', END])
-	.addConditionalEdges('callModel', takeActionOrEnd, ['createBrowser', 'executeAction', END])
-	.addEdge('createBrowser', 'executeAction')
+	.addConditionalEdges('validator', takeBrowserOrModelOrEnd, ['createBrowser', 'callModel', END])
+	.addEdge('createBrowser', 'callModel')
+	.addConditionalEdges('callModel', takeActionOrEnd, ['executeAction', END])
 	.addConditionalEdges('executeAction', reinvokeModelOrAnalyze, ['callModel', 'analyzeUsability'])
 	.addEdge('analyzeUsability', END);
 

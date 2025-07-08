@@ -4,17 +4,7 @@ import '@workspace/ui/globals.css';
 
 import { ThemeProviders } from '@/providers/theme';
 import { Toaster } from '@workspace/ui/components/sonner';
-import { QueryClientProvider } from '@/providers/query-client';
 import { NuqsAdapter } from 'nuqs/adapters/next/app';
-import { createMetadata } from '@/lib/metadata';
-
-export const metadata = createMetadata({
-	title: {
-		template: '%s | Pag',
-		default: 'Pag',
-	},
-	description: 'Automated user experience evaluation using AI agents',
-});
 
 const fontSans = Geist({
 	subsets: ['latin'],
@@ -32,7 +22,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 			<body className={`${fontSans.variable} ${fontMono.variable} font-sans antialiased `}>
 				<NuqsAdapter>
 					<ThemeProviders>
-						<QueryClientProvider>{children}</QueryClientProvider>
+						{children}
 						<Toaster richColors closeButton />
 					</ThemeProviders>
 				</NuqsAdapter>

@@ -1,5 +1,5 @@
 import type { AIMessageChunk } from '@langchain/core/messages';
-import { AIMessage, HumanMessage, SystemMessage } from '@langchain/core/messages';
+import { AIMessage, getBufferString, HumanMessage, SystemMessage } from '@langchain/core/messages';
 import { ChatPromptTemplate, HumanMessagePromptTemplate } from '@langchain/core/prompts';
 import { DynamicStructuredTool } from '@langchain/core/tools';
 import { LangGraphRunnableConfig } from '@langchain/langgraph';
@@ -97,5 +97,5 @@ export async function validator(
 			const toolCall = x.tool_calls?.[0];
 			return toolCall?.args as z.infer<typeof validatorTool.schema>;
 		})
-		.invoke({ prompt: firstMessage.content });
+		.invoke({ prompt: getBufferString(messages) });
 }

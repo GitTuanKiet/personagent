@@ -64,8 +64,10 @@ export async function callModel(
 ): Promise<BUAUpdate> {
 	const { sessionId, browserProfile, includeAttributes, useVision, persona, model } =
 		ensureConfiguration(config);
-	const { messages, actions: performedActions, nSteps, streamUrl } = state;
-	const prompt = messages.shift();
+	const { messages, actions: performedActions, nSteps, streamUrl, isDone } = state;
+	if (isDone) {
+		throw new Error('isDone');
+	}
 
 	let currentState;
 
@@ -124,7 +126,6 @@ ${elementTreeText}`;
 
 	const systemPrompt = await BROWSER_SYSTEM_PROMPT_TEMPLATE.format({
 		state: currentState,
-		task: prompt,
 		persona: personaText(persona),
 	});
 
@@ -134,6 +135,16 @@ ${elementTreeText}`;
 			parallel_tool_calls: true,
 		},
 	);
+
+	if (performedActions.length > 0) {
+		const lastAiMessageIndex = messages.findLastIndex((message) => message.getType() === 'ai');
+		if (lastAiMessageIndex !== -1) {
+			const lastAiMessage = messages[lastAiMessageIndex]!;
+			if (lastAiMessage.getType() === 'ai') {
+				(lastAiMessage as AIMessage).tool_calls = performedActions;
+			}
+		}
+	}
 
 	const response = await modelWithTools.invoke([
 		new SystemMessage(systemPrompt),

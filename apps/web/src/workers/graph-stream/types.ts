@@ -1,6 +1,5 @@
-import { ALL_MODEL_NAMES } from '@/lib/models';
-import type { CustomModelConfig } from '@/lib/models';
-import type { Application, GraphInput, Persona } from '@/types';
+import type { GraphInput, Persona } from '@/types';
+import type { Application } from '@/lib/appApi';
 
 export type StreamWorkerMessage =
 	| {
@@ -18,9 +17,8 @@ export type StreamWorkerMessage =
 export interface StreamConfig {
 	threadId: string;
 	assistantId: string;
+	sessionId: string;
 	input: GraphInput;
-	modelName: ALL_MODEL_NAMES;
-	modelConfigs: Record<string, CustomModelConfig>;
 	persona?: Persona;
 	application?: Application;
 }
